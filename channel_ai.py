@@ -1,96 +1,47 @@
+# channel_ai.py
 import requests
-from datetime import datetime
+import json
+from urllib.parse import urljoin
 
-SOURCE_URL = "https://raw.githubusercontent.com/fogret/sourt/master/config/subscribe.txt"
-OUT_TXT = "channels.txt"
-OUT_M3U = "channels.m3u"
-LOG_FILE = "process.log"
+def fetch_and_convert_to_m3u():
+    json_url = "https://cnb.cool/xiaomideyun/xiaomideyun/-/git/raw/main/mi.json"
+    output_m3u = "channels.m3u"
 
-def log(msg):
-    dt = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    line = f"[{dt}] {msg}"
-    print(line)
-    with open(LOG_FILE, "a", encoding="utf-8") as f:
-        f.write(line + "\n")
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36"
+    }
 
-def fetch_text(url):
     try:
-        r = requests.get(url, timeout=8)
-        r.raise_for_status()
-        return r.text
-    except:
-        return ""
+        resp = requests.get(json_url, headers=headers, timeout=20)
+        resp.raise_for_status()
+        data = resp.json()
 
-def is_media_url(url):
-    # 只保留真正的直播流，排除订阅文件
-    if not url.startswith("http"):
-        return False
-    if any(x in url.lower() for x in [".m3u", ".txt", "subscribe", "list", "index.php"]):
-        return False
-    return True
+        m3u_lines = ["#EXTM3U"]
+        count = 0
 
-def parse_line(line):
-    line = line.strip()
-    if not line:
-        return None
+        for cat in data.get("data", {}).get("list", []):
+            category = cat.get("type_name", "未分类").strip()
+            channels = cat.get("vod_list", [])
 
-    if "," in line:
-        name_part, _, url = line.rpartition(",")
-        name = name_part.strip()
-        url = url.strip()
-        if name and is_media_url(url):
-            return (name, url)
-    return None
+            for ch in channels:
+                name = ch.get("title", "未知频道").strip()
+                play_url = ch.get("play_url", "").strip()
+                if not play_url:
+                    continue
 
-def main():
-    log("===== 任务开始 =====")
-    log(f"下载主订阅：{SOURCE_URL}")
+                play_url = urljoin(json_url, play_url)
+                m3u_lines.append(f'#EXTINF:-1 tvg-name="{name}" group-title="{category}",{name}')
+                m3u_lines.append(play_url)
+                count += 1
 
-    main_text = fetch_text(SOURCE_URL)
-    if not main_text:
-        log("主订阅下载失败")
-        return
+        with open(output_m3u, "w", encoding="utf-8") as f:
+            f.write("\n".join(m3u_lines))
 
-    # 收集子订阅
-    sub_urls = []
-    for line in main_text.splitlines():
-        line = line.strip()
-        if line.startswith("http") and ".txt" in line or ".m3u" in line:
-            sub_urls.append(line)
+        print(f"✅ 转换完成！已生成：{output_m3u}")
+        print(f"📺 共提取频道：{count} 个")
 
-    log(f"找到子订阅：{len(sub_urls)} 个")
-
-    all_channels = []
-    seen = set()
-
-    for i, sub in enumerate(sub_urls, 1):
-        log(f"[{i}/{len(sub_urls)}] 解析 {sub[:60]}")
-        text = fetch_text(sub)
-        if not text:
-            continue
-
-        for line in text.splitlines():
-            ch = parse_line(line)
-            if ch:
-                name, url = ch
-                if url not in seen:
-                    seen.add(url)
-                    all_channels.append((name, url))
-
-    log(f"解析完成，去重后有效频道：{len(all_channels)} 个")
-
-    # 输出
-    with open(OUT_TXT, "w", encoding="utf-8") as f:
-        for name, url in all_channels:
-            f.write(f"{name},{url}\n")
-
-    with open(OUT_M3U, "w", encoding="utf-8") as f:
-        f.write("#EXTM3U\n")
-        for name, url in all_channels:
-            f.write(f"#EXTINF:-1,{name}\n{url}\n")
-
-    log("全部完成！已生成 channels.txt + channels.m3u")
-    log("===== 任务结束 =====\n")
+    except Exception as e:
+        print(f"❌ 出错：{e}")
 
 if __name__ == "__main__":
-    main()
+    fetch_and_convert_to_m3u()
