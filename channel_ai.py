@@ -1,13 +1,11 @@
 import requests
 from datetime import datetime
 
-# 配置
 SOURCE_URL = "https://raw.githubusercontent.com/fogret/sourt/master/config/subscribe.txt"
 OUT_TXT = "channels.txt"
 OUT_M3U = "channels.m3u"
 LOG_FILE = "process.log"
 
-# 日志
 def log(msg):
     dt = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     line = f"[{dt}] {msg}"
@@ -15,28 +13,35 @@ def log(msg):
     with open(LOG_FILE, "a", encoding="utf-8") as f:
         f.write(line + "\n")
 
-# 获取单个文本
 def fetch_text(url):
     try:
-        r = requests.get(url, timeout=10)
+        r = requests.get(url, timeout=8)
         r.raise_for_status()
         return r.text
     except:
         return ""
 
-# 解析一行 line 得到 (name, url)
+def is_media_url(url):
+    # 只保留真正的直播流，排除订阅文件
+    if not url.startswith("http"):
+        return False
+    if any(x in url.lower() for x in [".m3u", ".txt", "subscribe", "list", "index.php"]):
+        return False
+    return True
+
 def parse_line(line):
     line = line.strip()
-    if not line or "," not in line:
+    if not line:
         return None
-    name_part, _, url = line.rpartition(",")
-    name = name_part.strip()
-    url = url.strip()
-    if url.startswith("http"):
-        return (name, url)
+
+    if "," in line:
+        name_part, _, url = line.rpartition(",")
+        name = name_part.strip()
+        url = url.strip()
+        if name and is_media_url(url):
+            return (name, url)
     return None
 
-# 主程序
 def main():
     log("===== 任务开始 =====")
     log(f"下载主订阅：{SOURCE_URL}")
@@ -46,21 +51,20 @@ def main():
         log("主订阅下载失败")
         return
 
-    # 提取所有子订阅
+    # 收集子订阅
     sub_urls = []
     for line in main_text.splitlines():
         line = line.strip()
-        if line.startswith("http"):
+        if line.startswith("http") and ".txt" in line or ".m3u" in line:
             sub_urls.append(line)
 
-    log(f"找到子订阅数量：{len(sub_urls)} 个")
+    log(f"找到子订阅：{len(sub_urls)} 个")
 
-    # 批量解析所有订阅
     all_channels = []
-    seen_url = set()
+    seen = set()
 
-    for idx, sub in enumerate(sub_urls, 1):
-        log(f"[{idx}/{len(sub_urls)}] 解析：{sub}")
+    for i, sub in enumerate(sub_urls, 1):
+        log(f"[{i}/{len(sub_urls)}] 解析 {sub[:60]}")
         text = fetch_text(sub)
         if not text:
             continue
@@ -69,18 +73,17 @@ def main():
             ch = parse_line(line)
             if ch:
                 name, url = ch
-                if url not in seen_url:
-                    seen_url.add(url)
-                    all_channels.append(ch)
+                if url not in seen:
+                    seen.add(url)
+                    all_channels.append((name, url))
 
-    log(f"所有订阅解析完成，去重后总频道：{len(all_channels)} 个")
+    log(f"解析完成，去重后有效频道：{len(all_channels)} 个")
 
-    # 写入 txt
+    # 输出
     with open(OUT_TXT, "w", encoding="utf-8") as f:
         for name, url in all_channels:
             f.write(f"{name},{url}\n")
 
-    # 写入 m3u
     with open(OUT_M3U, "w", encoding="utf-8") as f:
         f.write("#EXTM3U\n")
         for name, url in all_channels:
