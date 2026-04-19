@@ -1,50 +1,59 @@
 # -*- coding: utf-8 -*-
+import os
 import requests
 
-# 目标订阅地址
+# 配置
 subscribe_url = "https://raw.githubusercontent.com/fogret/sourt/master/config/subscribe.txt"
-# 要查找的IP
 target_ip = "43.251.226.110"
+tmp_dir = "./tmp_subs"
 
 def main():
+    os.makedirs(tmp_dir, exist_ok=True)
+
+    # 1. 下载主订阅列表
     try:
-        print("正在获取订阅列表...")
+        print("正在下载订阅列表...")
         resp = requests.get(subscribe_url, timeout=15)
         resp.raise_for_status()
         lines = resp.text.splitlines()
     except Exception as e:
-        print("获取订阅列表失败:", e)
+        print("下载订阅列表失败:", e)
         return
 
-    # 提取所有以 m3u、m3u8、txt 结尾的链接
-    sources = []
-    for line in lines:
-        line = line.strip()
-        if not line:
-            continue
-        if line.endswith((".m3u", ".m3u8", ".txt")):
-            sources.append(line)
+    # 提取所有源地址
+    sources = [
+        line.strip()
+        for line in lines
+        if line.strip() and line.strip().endswith((".m3u", ".m3u8", ".txt"))
+    ]
 
-    print(f"共找到 {len(sources)} 个源，开始扫描IP...\n")
+    print(f"共获取 {len(sources)} 个源")
 
     found = []
-    for url in sources:
-        try:
-            print(f"扫描: {url}")
-            res = requests.get(url, timeout=10)
-            if target_ip in res.text:
-                print("✅ 找到目标IP！来源:", url)
-                found.append(url)
-        except Exception as e:
-            print(f"❌ 访问失败: {url[:50]}...")
 
+    # 2. 逐个下载 + 本地扫描
+    for idx, url in enumerate(sources, 1):
+        try:
+            print(f"[{idx}/{len(sources)}] 下载: {url}")
+            res = requests.get(url, timeout=12)
+            content = res.text
+
+            # 本地检查IP
+            if target_ip in content:
+                print("✅ 找到目标IP")
+                found.append(url)
+
+        except Exception as e:
+            print(f"❌ 下载/扫描失败: {str(e)[:60]}")
+
+    # 3. 结果
     print("\n===== 扫描完成 =====")
     if found:
-        print("包含IP " + target_ip + " 的源:")
+        print("\n包含 IP %s 的源：" % target_ip)
         for u in found:
-            print("-", u)
+            print(u)
     else:
-        print("未在任何订阅中找到该IP")
+        print("未找到包含该IP的源")
 
 if __name__ == "__main__":
     main()
