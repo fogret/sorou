@@ -1,85 +1,62 @@
 # channel_ai.py
-# 适配OK影视安卓4.0专用版，生成标准M3U（含频道名）
-import requests
-import json
-import time
+import urllib.request
+import re
 
-def main():
-    print("="*50)
-    print(f"📅 开始运行：{time.strftime('%Y-%m-%d %H:%M:%S')}")
-    print("📶 适配OK影视安卓4.0专用版接口")
-    print("="*50)
+def scan_m3u():
+    # 目标m3u地址
+    url = "https://raw.githubusercontent.com/Jsnzkpg/Jsnzkpg/Jsnzkpg/Jsnzkpg1.m3u"
+    
+    # 请求头，解决访问限制
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    }
+    
+    try:
+        print("正在下载并解析频道列表...")
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=10) as f:
+            content = f.read().decode('utf-8', errors='ignore')
 
-    # OK影视4.0专版常用接口（选一个即可）
-    api_urls = [
-        "https://cnb.cool/xiaomideyun/xiaomideyun/-/git/raw/main/mi.json",
-        "https://ghproxy.com/https://raw.githubusercontent.com/yyds765/uzvideo/main/box.json",
-        "https://ghproxy.cn/https://raw.githubusercontent.com/fenfa9988/iptv/main/itvbox.txt"
-    ]
+        # 存储结果
+        result = []
+        current_group = "未分类"
 
-    channels = []
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        # 逐行解析
+        lines = content.splitlines()
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
 
-    for idx, url in enumerate(api_urls, 1):
-        try:
-            print(f"🔗 尝试接口 {idx}/{len(api_urls)}: {url}")
-            resp = requests.get(url, headers=headers, timeout=15)
-            resp.raise_for_status()
-            content = resp.text.strip()
+            # 提取分类 group-title
+            if 'group-title="' in line:
+                g = re.search(r'group-title="([^"]+)"', line)
+                if g:
+                    current_group = g.group(1).strip()
 
-            # 尝试解析JSON（兼容OK影视加密/明文混合）
-            try:
-                data = json.loads(content)
-                # 提取频道（适配OK影视常见结构）
-                if isinstance(data, list):
-                    for item in data:
-                        if "name" in item and "url" in item:
-                            channels.append({"name": item["name"], "url": item["url"]})
-                        elif "title" in item and "link" in item:
-                            channels.append({"name": item["title"], "url": item["link"]})
-                elif isinstance(data, dict):
-                    for k, v in data.items():
-                        if isinstance(v, dict) and ("url" in v or "link" in v):
-                            name = v.get("name", v.get("title", k))
-                            url = v.get("url", v.get("link", ""))
-                            if url:
-                                channels.append({"name": name, "url": url})
-            except json.JSONDecodeError:
-                # 非JSON，按行提取（适配OK影视txt接口）
-                lines = content.splitlines()
-                for line in lines:
-                    line = line.strip()
-                    if line.startswith(("http://", "https://", "rtmp://", "rtsp://")):
-                        channels.append({"name": f"OK频道_{len(channels)+1}", "url": line})
+            # 提取频道名 tvg-name
+            if line.startswith("#EXTINF:"):
+                n = re.search(r'tvg-name="([^"]+)"', line)
+                if n:
+                    channel_name = n.group(1).strip()
+                    result.append(f"[{current_group}] {channel_name}")
 
-            print(f"✅ 接口 {idx} 处理完成，当前累计频道：{len(channels)}")
+        # 去重 + 排序
+        result = sorted(list(set(result)))
 
-        except Exception as e:
-            print(f"⚠️ 接口 {idx} 失败: {str(e)[:60]}...")
-            continue
+        # 写入根目录 txt
+        save_path = "频道分类列表.txt"
+        with open(save_path, "w", encoding="utf-8") as f:
+            f.write(f"扫描完成，共 {len(result)} 个频道\n")
+            f.write("="*40 + "\n")
+            f.write("\n".join(result))
 
-    # 去重
-    seen = set()
-    unique_channels = []
-    for ch in channels:
-        if ch["url"] not in seen:
-            seen.add(ch["url"])
-            unique_channels.append(ch)
+        print(f"✅ 完成！文件已保存到：{save_path}")
+        print(f"📺 频道总数：{len(result)}")
 
-    # 生成M3U
-    m3u = ["#EXTM3U"]
-    for ch in unique_channels:
-        m3u.append(f'#EXTINF:-1,{ch["name"]}')
-        m3u.append(ch["url"])
-
-    # 写入文件
-    with open("channels.m3u", "w", encoding="utf-8") as f:
-        f.write("\n".join(m3u))
-
-    print("="*50)
-    print(f"✅ 生成完成：共 {len(unique_channels)} 个频道")
-    print(f"📄 输出文件：channels.m3u")
-    print("="*50)
+    except Exception as e:
+        print(f"❌ 错误：{str(e)}")
+        print("💡 建议：检查网络，或挂代理后重新运行")
 
 if __name__ == "__main__":
-    main()
+    scan_m3u()
