@@ -1,4 +1,4 @@
-name: Auto Channel Scan
+name: Auto Update Channel
 
 on:
   schedule:
@@ -8,9 +8,14 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -20,8 +25,10 @@ jobs:
       - name: Run channel_ai.py
         run: python channel_ai.py
 
-      - name: Upload channel list
-        uses: actions/upload-artifact@v4
+      - name: Commit and push to repo
+        uses: ad-m/github-push-action@master
         with:
-          name: channel-list
-          path: 频道分类列表.txt
+          branch: main
+          directory: .
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          message: "Auto update channel list $(date +'%Y-%m-%d %H:%M')"
