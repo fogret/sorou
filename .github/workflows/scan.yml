@@ -1,4 +1,4 @@
-name: 扫描订阅源IP
+name: Scan Source IP
 
 on:
   workflow_dispatch:
@@ -6,19 +6,16 @@ on:
 jobs:
   scan:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - name: 检出代码
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: 设置 Python
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: 安装依赖
+      - name: Install requests
         run: pip install requests
 
-      - name: 运行扫描脚本
-        run: python requests.py
+      - name: Run Scan
+        run: python scan_ip.py
