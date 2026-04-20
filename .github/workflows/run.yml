@@ -1,0 +1,23 @@
+name: Fix Channel Names
+
+on:
+  workflow_dispatch:  # 手动点 Run 就执行
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run fix script
+        run: python fix_names.py
+
+      - name: Commit and push
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add output.m3u
+          git commit -m "Auto generate output.m3u"
+          git push
