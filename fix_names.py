@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
 
-with open("data.txt", "r", encoding="utf-8") as f:
+with open("data.txt", encoding="utf-8") as f:
     lines = [l.strip() for l in f if l.strip()]
 
 m3u = ["#EXTM3U"]
@@ -10,8 +10,8 @@ p = re.compile(r"play/(\d+)\.m3u8")
 for line in lines:
     match = p.search(line)
     if match:
+        # 只提取数字做频道名
         num = match.group(1)
-        # 直接用数字当频道名
         m3u.append(f"#EXTINF:-1,{num}")
         m3u.append(line)
 
