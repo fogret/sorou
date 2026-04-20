@@ -10,7 +10,6 @@ p = re.compile(r"play/(\d+)\.m3u8")
 for line in lines:
     match = p.search(line)
     if match:
-        # 只提取数字做频道名
         num = match.group(1)
         m3u.append(f"#EXTINF:-1,{num}")
         m3u.append(line)
