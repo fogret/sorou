@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 import re
 
-with open("data.txt", encoding="utf-8") as f:
+with open("data.txt", "r", encoding="utf-8") as f:
     lines = [l.strip() for l in f if l.strip()]
 
 m3u = ["#EXTM3U"]
-p = re.compile(r"play/(\d+)\.m3u8")
+reg = re.compile(r"play/(\d+)\.m3u8")
 
 for line in lines:
-    match = p.search(line)
+    match = reg.search(line)
     if match:
         num = match.group(1)
         m3u.append(f"#EXTINF:-1,{num}")
