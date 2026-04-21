@@ -18,7 +18,10 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Run generate script
+      - name: Install requests
+        run: pip install requests
+
+      - name: Run script
         run: python generate_m3u.py
 
       - name: Commit & Push
