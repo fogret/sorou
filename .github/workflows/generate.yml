@@ -12,6 +12,11 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Pull latest changes
+        run: git pull origin main
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -27,6 +32,6 @@ jobs:
       - name: Commit & Push
         uses: EndBug/add-and-commit@v9
         with:
-          message: Update live.m3u
+          message: "更新 live.m3u"
           committer_name: github-actions[bot]
           committer_email: github-actions[bot]@users.noreply.github.com
