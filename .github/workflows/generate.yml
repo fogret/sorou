@@ -12,20 +12,18 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Run script
+      - name: Run generate script
         run: python generate_m3u.py
 
       - name: Commit & Push
         uses: EndBug/add-and-commit@v9
         with:
-          message: Update m3u
+          message: Update live.m3u
           committer_name: github-actions[bot]
           committer_email: github-actions[bot]@users.noreply.github.com
