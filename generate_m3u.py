@@ -14,32 +14,47 @@ OUTPUT = "live.m3u"
 logger.info("开始读取 data.txt")
 
 try:
-    with open(INPUT, "r", encoding="utf-8", errors="ignore") as f:
-        content = f.read()
+    with open(INPUT, 'r', encoding='utf-8', errors='ignore') as f:
+        lines = f.readlines()
 except Exception as e:
-    logger.error(f"读取文件失败: {e}")
+    logger.error(f"读取失败: {e}")
     raise
 
-pattern = re.compile(r"^(.*?)(https?://\S+)", re.MULTILINE)
-matches = pattern.findall(content)
-logger.info(f"匹配到 {len(matches)} 条记录")
+seen_urls = set()
+output = ['#EXTM3U']
+current_name = None
 
-seen = set()
-m3u = ["#EXTM3U"]
+url_pattern = re.compile(r'^https?://')
 
-for name_part, url in matches:
-    url = url.strip()
-    if url in seen:
-        logger.info(f"去重: {url}")
+logger.info("开始解析频道...")
+
+for line in lines:
+    line = line.strip()
+    if not line:
         continue
-    seen.add(url)
-    name = name_part.strip() or "未知频道"
-    m3u.append(f"#EXTINF:-1,{name}")
-    m3u.append(url)
 
-logger.info(f"最终频道数量: {len(seen)}")
+    # 匹配频道名称
+    if line.startswith('#EXTINF'):
+        current_name = line
+        continue
 
-with open(OUTPUT, "w", encoding="utf-8") as f:
-    f.write("\n".join(m3u))
+    # 匹配 URL
+    if url_pattern.match(line):
+        url = line
+        if url in seen_urls:
+            logger.info(f"去重重复链接: {url}")
+            continue
+
+        seen_urls.add(url)
+        if current_name:
+            output.append(current_name)
+            output.append(url)
+        current_name = None
+
+logger.info(f"原始记录: {len(lines)} 行")
+logger.info(f"去重后有效频道: {len(seen_urls)} 个")
+
+with open(OUTPUT, 'w', encoding='utf-8') as f:
+    f.write('\n'.join(output))
 
 logger.info(f"生成完成: {OUTPUT}")
