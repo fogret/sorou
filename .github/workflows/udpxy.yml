@@ -8,49 +8,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - name: Install requests
+      - name: Install dependencies
         run: pip install requests
 
-      - name: Run udpxy check
-        run: |
-          cat > udpxy.py << 'EOF'
-import requests
-from concurrent.futures import ThreadPoolExecutor
+      - name: Run udpxy scan
+        run: python udpxy.py
 
-list = [
-  "58.42.0.1:4022",
-  "58.42.0.1:8888",
-  "111.123.0.1:4022",
-  "111.123.0.1:8888"
-]
-
-def check(host):
-  try:
-    r = requests.get(f"http://{host}/status", timeout=2)
-    if "udpxy" in r.text:
-      return host
-  except:
-    return None
-
-with ThreadPoolExecutor(10) as t:
-  res = t.map(check, list)
-
-with open("udpxy.txt", "w") as f:
-  f.write("\n".join([x for x in res if x]))
-EOF
-
-      - run: python udpxy.py
-
-      - name: Push
+      - name: Commit and push result
         run: |
           git config user.name "bot"
           git config user.email "bot@github.com"
           git add udpxy.txt
-          git commit -m "update" || true
+          git commit -m "Update udpxy available hosts" || true
           git push
