@@ -1,65 +1,56 @@
-name: Scan udpxy
+name: udpxy-scan
+
 on:
   workflow_dispatch:
 
 jobs:
-  scan:
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
+      - uses: actions/checkout@v4
+      
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.10'
 
-      - name: Install dependencies
+      - name: Install requests
         run: pip install requests
 
-      - name: Write udpxy.py
+      - name: Run udpxy check
         run: |
           cat > udpxy.py << 'EOF'
 import requests
 from concurrent.futures import ThreadPoolExecutor
 
-targets = [
-    "58.42.0.1:4022", "58.42.0.1:8888",
-    "111.123.0.1:4022", "111.123.0.1:8888",
-    "113.206.0.1:4022", "113.206.0.1:8888",
-    "183.66.0.1:4022", "183.66.0.1:8888",
-    "219.141.0.1:4022", "219.141.0.1:8888"
+list = [
+  "58.42.0.1:4022",
+  "58.42.0.1:8888",
+  "111.123.0.1:4022",
+  "111.123.0.1:8888"
 ]
 
-def check(ip_port):
-    try:
-        url = f"http://{ip_port}/status"
-        r = requests.get(url, timeout=2)
-        if "udpxy" in r.text:
-            return ip_port
-    except:
-        return None
+def check(host):
+  try:
+    r = requests.get(f"http://{host}/status", timeout=2)
+    if "udpxy" in r.text:
+      return host
+  except:
+    return None
 
-if __name__ == "__main__":
-    found = []
-    with ThreadPoolExecutor(30) as pool:
-        res = pool.map(check, targets)
-    found = [x for x in res if x]
-    with open("udpxy_result.txt", "w") as f:
-        f.write("\n".join(found))
+with ThreadPoolExecutor(10) as t:
+  res = t.map(check, list)
+
+with open("udpxy.txt", "w") as f:
+  f.write("\n".join([x for x in res if x]))
 EOF
 
-      - name: Run scan
-        run: python udpxy.py
+      - run: python udpxy.py
 
-      - name: Push result
+      - name: Push
         run: |
-          git config user.name "Actions"
-          git config user.email "actions@github.com"
-          git add udpxy_result.txt || true
-          git commit -m "Update udpxy list" || true
+          git config user.name "bot"
+          git config user.email "bot@github.com"
+          git add udpxy.txt
+          git commit -m "update" || true
           git push
