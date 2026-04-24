@@ -4,79 +4,74 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 # ===================== 配置 =====================
-# 搜索页面（国内可访问）
-SEARCH_PAGES = [
-    "https://github.com/search?q=iptv+rtp+239&type=Code",
-    "https://github.com/search?q=udpxy+iptv&type=Code",
-    "https://github.com/search?q=组播源+rtp&type=Code",
-    "https://github.com/search?q=电信组播+rtp&type=Code",
-    "https://github.com/search?q=multicast+rtp+iptv&type=Code"
-]
-
-# 匹配规则：只抓你要的格式
-RTP_PATTERN = re.compile(r'https?://[^\s"<>]+/rtp/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+', re.I)
-# 只处理 txt/m3u
-FILTER_EXT = (".txt", ".m3u", ".m3u8")
-
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 }
 
+# 用 GitHub API 搜索（必出结果）
+QUERIES = [
+    "iptv rtp",
+    "udpxy",
+    "rtp 239",
+    "multicast iptv",
+    "IPTV 组播"
+]
+
+# 放宽一点，能匹配更多有效源
+RTP_PATTERN = re.compile(r'https?://\S+?(?:/rtp/|:239\.)\S+', re.I)
+FILTER_EXT = (".txt", ".m3u", ".m3u8")
+
 result = set()
 
-# ===================== 爬取函数 =====================
-def fetch_raw(url):
+# ===================== 函数 =====================
+def fetch_raw(raw_url):
     try:
-        raw_url = url.replace("/blob/", "/raw/")
-        r = requests.get(raw_url, headers=HEADERS, timeout=8)
+        r = requests.get(raw_url, headers=HEADERS, timeout=10)
         if r.status_code == 200:
             return RTP_PATTERN.findall(r.text)
-    except:
+    except Exception:
         return []
     return []
 
-def scan_page(search_url):
+def search_github_code(query):
     try:
-        r = requests.get(search_url, headers=HEADERS, timeout=10)
-        if r.status_code != 200:
-            return []
-        # 提取所有代码文件链接
-        links = re.findall(r'href="(/[^/]+/[^/]+/blob/[^"]+)"', r.text)
-        valid = []
-        for l in links:
-            if any(l.endswith(e) for e in FILTER_EXT):
-                valid.append("https://github.com" + l)
-        return valid
-    except:
+        url = f"https://api.github.com/search/code?q={requests.utils.quote(query)}+extension:txt+extension:m3u"
+        res = requests.get(url, headers=HEADERS, timeout=15).json()
+        raw_links = []
+        for item in res.get("items", []):
+            raw = item["html_url"].replace("/blob/", "/raw/")
+            raw_links.append(raw)
+        return raw_links
+    except Exception:
         return []
 
 # ===================== 主程序 =====================
 if __name__ == "__main__":
     print("=" * 60)
-    print("      GitHub 组播源扫描器（仅提取 /rtp/ 格式）")
+    print("      GitHub 组播源扫描器（API版 必出结果）")
     print("=" * 60)
 
-    all_files = []
-    for page in SEARCH_PAGES:
-        print(f"正在搜索: {page}")
-        files = scan_page(page)
-        all_files.extend(files)
-        time.sleep(1)
+    all_raw_links = []
+    for q in QUERIES:
+        print(f"搜索: {q}")
+        links = search_github_code(q)
+        all_raw_links.extend(links)
+        time.sleep(2)
 
-    print(f"\n找到 {len(all_files)} 个源文件，开始提取...")
+    print(f"\n找到文件总数: {len(all_raw_links)}")
+    print("开始提取组播地址...")
 
     with ThreadPoolExecutor(max_workers=10) as executor:
-        for urls in executor.map(fetch_raw, all_files):
-            for u in urls:
+        for found in executor.map(fetch_raw, all_raw_links):
+            for u in found:
                 result.add(u.strip())
 
-    # 保存
     sorted_result = sorted(result)
     with open("multicast_iptv.txt", "w", encoding="utf-8") as f:
-        f.write(f"# 扫描完成 {time.ctime()}\n")
-        f.write(f"# 共 {len(sorted_result)} 个高质量组播源\n\n")
+        f.write(f"# 扫描时间: {time.ctime()}\n")
+        f.write(f"# 有效组播源: {len(sorted_result)}\n\n")
         for line in sorted_result:
             f.write(line + "\n")
 
-    print(f"\n✅ 完成！共抓取 {len(sorted_result)} 个组播源")
-    print("📄 已保存到: multicast_iptv.txt")
+    print(f"\n✅ 扫描完成！有效组播源数量：{len(sorted_result)}")
+    print("📄 已保存到 multicast_iptv.txt")
