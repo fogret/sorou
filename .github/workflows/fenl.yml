@@ -1,0 +1,35 @@
+name: Run fenl and commit
+
+on:
+  workflow_dispatch:   # 仅手动运行
+
+jobs:
+  run-fenl:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true   # 必须开启，否则无法 push
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install requests
+
+      - name: Run fenl.py
+        run: |
+          python fenl.py
+
+      - name: Commit and push changes
+        run: |
+          git config --local user.name "github-actions"
+          git config --local user.email "github-actions@github.com"
+          git add fenl_output.txt
+          git commit -m "Update fenl_output.txt" || echo "No changes to commit"
+          git push
