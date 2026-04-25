@@ -1,90 +1,78 @@
+# -*- coding: utf-8 -*-
+import os
+import re
 import requests
-import ipaddress
-import logging
-from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
-# ===================== 日志配置 =====================
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-    handlers=[
-        logging.FileHandler("udpxy_scan.log", encoding="utf-8"),
-        logging.StreamHandler()
-    ]
-)
+# ===================== 核心配置 =====================
+# 最优省份：浙江电信（源最多、最稳、高清多）
+PROVINCE = "浙江电信"
 
-# ===================== 配置 =====================
-IP_RANGES = [
-    "58.42.0.0/16",
-    "211.98.0.0/16",
-    "219.141.0.0/16",
-    "222.86.0.0/15",
-    "111.123.0.0/16",
-    "113.206.0.0/16",
-    "183.66.0.0/16",
-    "182.100.0.0/15",
-    "119.131.64.0/18",
-    "119.131.128.0/18",
-    "117.136.0.0/15",
-    "118.112.0.0/14"
+# 黄金网段（浙江电信最容易出 udpxy）
+IPS = [
+    "61.164.99.1-20:80",
+    "115.220.0.1-20:80",
+    "122.228.199.1-20:80",
+    "117.136.0.1-20:80",
+    "223.151.0.1-20:80",
 ]
 
-PORTS = [4022, 8888, 8080, 5000, 5002, 8000, 9000, 9090, 6666, 7777]
+THREADS = 64    # GitHub 安全上限，不触发限流
+TIMEOUT = 2.5
 
-valid_list = []
+# ===================== 工具函数 =====================
+def expand_ip(ip_str):
+    ips = []
+    match = re.match(r'(\d+\.\d+\.\d+)\.(\d+)-(\d+):(\d+)', ip_str)
+    if not match:
+        return ips
+    pre, s, e, port = match.groups()
+    for i in range(int(s), int(e)+1):
+        ips.append(f"{pre}.{i}:{port}")
+    return ips
 
-# ===================== 检测函数 =====================
-def check_udpxy(ip, port):
-    url = f"http://{ip}:{port}/status"
+def check_udpxy(host_port):
     try:
-        r = requests.get(url, timeout=2)
-        if r.status_code == 200 and "udpxy" in r.text.lower():
-            logging.info(f"有效 → {url}")
-            valid_list.append(f"{ip}:{port}")
-    except requests.exceptions.Timeout:
-        logging.debug(f"超时 → {url}")
-    except requests.exceptions.ConnectionError:
-        logging.debug(f"拒绝 → {url}")
-    except Exception as e:
-        logging.debug(f"错误 → {url} | {str(e)}")
-
-# ===================== IP 生成 =====================
-def ip_range_to_list(cidr):
-    try:
-        net = ipaddress.IPv4Network(cidr, strict=False)
-        return [str(ip) for ip in net.hosts()]
+        host, port = host_port.split(':')
     except:
-        logging.error(f"网段解析失败: {cidr}")
-        return []
+        return None
+
+    for path in ['/stat', '/status']:
+        url = f"http://{host_port}{path}"
+        try:
+            r = requests.get(url, timeout=TIMEOUT, headers={"User-Agent":"Mozilla/5.0"}, allow_redirects=False)
+            if r.status_code in (200, 302):
+                if any(k in r.text for k in ("udpxy", "Multi stream daemon", "status", "client")):
+                    print(f"[有效] {url}")
+                    return host_port
+        except:
+            continue
+    return None
 
 # ===================== 主扫描 =====================
+def scan():
+    print(f"===== 开始扫描 {PROVINCE} udpxy =====")
+    targets = []
+    for ip in IPS:
+        targets += expand_ip(ip)
+
+    valid = []
+    with ThreadPoolExecutor(max_workers=THREADS) as pool:
+        futs = {pool.submit(check_udpxy, t): t for t in targets}
+        for f in as_completed(futs):
+            res = f.result()
+            if res:
+                valid.append(res)
+
+    valid = sorted(list(set(valid)))
+    print(f"\n扫描完成，有效 udpxy：{len(valid)} 个")
+
+    os.makedirs("ip", exist_ok=True)
+    with open(f"ip/{PROVINCE}_ip.txt", "w", encoding="utf-8") as f:
+        f.write("\n".join(valid))
+
+    print(f"已保存到 ip/{PROVINCE}_ip.txt")
+    return valid
+
 if __name__ == "__main__":
-    start = datetime.now()
-    logging.info("=" * 50)
-    logging.info("贵州电信 udpxy 批量扫描启动")
-    logging.info(f"开始时间: {start.strftime('%Y-%m-%d %H:%M:%S')}")
-    logging.info("=" * 50)
-
-    with ThreadPoolExecutor(max_workers=50) as pool:
-        for cidr in IP_RANGES:
-            logging.info(f"正在扫描网段: {cidr}")
-            ip_list = ip_range_to_list(cidr)
-            for ip in ip_list:
-                for port in PORTS:
-                    pool.submit(check_udpxy, ip, port)
-
-    # 结束统计
-    end = datetime.now()
-    cost = (end - start).total_seconds()
-
-    logging.info("=" * 50)
-    logging.info(f"扫描完成 | 耗时: {cost:.1f}s | 找到有效: {len(valid_list)} 个")
-    logging.info("=" * 50)
-
-    # 保存结果
-    if valid_list:
-        with open("udpxy.txt", "w", encoding="utf-8") as f:
-            f.write("\n".join(valid_list))
-        logging.info("结果已保存至 udpxy.txt")
+    scan()
