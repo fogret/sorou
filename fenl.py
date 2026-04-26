@@ -2,50 +2,56 @@
 import os
 
 def main():
-    input_file = "data.txt"
-    output_file = "fenl_output.txt"
+    input_path = "data.txt"
+    output_path = "fenl_output.txt"
 
-    if not os.path.exists(input_file):
-        print("错误：未找到 data.txt")
+    if not os.path.exists(input_path):
+        print("未找到 data.txt")
         return
 
-    # 直接读取你真实的频道数据（不需要 requests）
-    lines = []
-    with open(input_file, "r", encoding="utf-8") as f:
-        lines = [line.strip() for line in f if line.strip()]
+    # 读取数据
+    with open(input_path, "r", encoding="utf-8") as f:
+        content = f.read()
 
-    if not lines:
-        print("错误：data.txt 为空")
-        return
-
-    # 原始格式示例：
-    # #EXTINF:-1 group-title="河南电信-组播1",河南卫视
+    # 解析：按行解析分组名与频道名
+    lines = content.splitlines()
     groups = {}
+    current_group = None
 
     for line in lines:
-        if "group-title=" in line:
+        if "group=" in line:
             # 提取分组名
-            g = line.split('group-title="')[1].split('"')[0]
-            # 提取频道名
-            chan = line.split(",")[-1].strip()
+            parts = line.split('group="')
+            if len(parts) > 1:
+                current_group = parts[1].split('"')[0]
+                continue
 
-            if g not in groups:
-                groups[g] = []
-            groups[g].append(chan)
+        if "title=" in line:
+            # 提取频道名
+            parts = line.split('title="')
+            if len(parts) > 1:
+                name = parts[1].split('"')[0]
+                if current_group:
+                    if current_group not in groups:
+                        groups[current_group] = []
+                    groups[current_group].append(name)
 
     # 去重
     for g in groups:
-        groups[g] = list(set(groups[g]))
+        unique = []
+        for x in groups[g]:
+            if x not in unique:
+                unique.append(x)
+        groups[g] = unique
 
-    # 写入
-    with open(output_file, "w", encoding="utf-8") as f:
-        for g, chans in groups.items():
-            f.write(f"【{g}】\n")
-            for c in chans:
-                f.write(f" - {c}\n")
-            f.write("\n")
+    # 输出
+    with open(output_path, "w", encoding="utf-8") as f:
+        for g in groups:
+            f.write(f"{g}\n")
+            for name in groups[g]:
+                f.write(f"- {name}\n")
 
-    print(f"完成！结果已写入：{output_file}")
+    print(f"完成，结果已输出到: {output_path}")
 
 if __name__ == "__main__":
     main()
