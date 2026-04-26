@@ -107,6 +107,9 @@ def main():
         if text:
             all_channels.extend(extract_channels(text))
 
+    # ⭐ 去重（保持顺序）
+    all_channels = list(dict.fromkeys(all_channels))
+
     # 分类容器
     groups = {
         "央视频道": [],
