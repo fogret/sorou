@@ -17,6 +17,13 @@ result["IPTV频道"] = set()
 # 匹配正则
 pattern = re.compile(r'group-title="([^"]+)",([^ \n\r]+)', re.I)
 
+# 特殊央视付费频道，强制归为央视
+special_cctv = {
+    "CCTV世界地理", "CCTV兵器科技", "CCTV女性时尚", "CCTV怀旧剧场",
+    "CCTV电视指南", "CCTV第一剧场", "CCTV风云剧场", "CCTV风云足球",
+    "CCTV风云音乐", "CCTV高尔夫网球"
+}
+
 def log(msg):
     print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}")
 
@@ -28,12 +35,17 @@ def clean_province(name):
     return s
 
 def is_cctv(name):
+    if name in special_cctv:
+        return True
     return name.startswith("CCTV-") or "央视" in name
 
 def is_weishi(name):
     return "卫视" in name
 
 def is_pay(name):
+    # 已经归到央视的，不再算付费
+    if name in special_cctv:
+        return False
     pay_keys = ["付费", "精品", "高清", "4K", "购物", "测试", "导视", "VIP", "尊享", "数字"]
     return any(k in name for k in pay_keys)
 
