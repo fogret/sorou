@@ -1,26 +1,27 @@
 # -*- coding: utf-8 -*-
 """
-最终版：
-功能：下载根目录文件
+最终版：通用解析脚本
+功能：解析 data.txt，生成运行日志
 """
 import os
-import json
+import sys
 
-def parse_final(file_path):
-    """最终解析逻辑"""
+def run_script(data_file="data.txt"):
+    """最终执行脚本"""
+    # 示例：直接执行解析逻辑
     result = []
-    with open(file_path, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
+    with open(data_file, "r", encoding="utf-8") as f:
+        for line_num, line_content in enumerate(f, 1):
+            line = line_content.strip()
             if not line:
                 continue
-            # 按分类提取
-            if "分类1" in line:
-                result.append(line)
-            elif "分类2" in line:
-                result.append(line)
-    return result
+            result.append(f"行 {line_num}: {line}")
+    
+    # 写入日志
+    with open("run_result.log", "w", encoding="utf-8") as log_f:
+        log_f.write("\n".join(result))
+    
+    print("已完成解析，结果已写入 run_result.log")
 
 if __name__ == "__main__":
-    # 直接解析根目录 data
-    parse_final("data.txt")
+    run_script()
