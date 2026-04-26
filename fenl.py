@@ -1,5 +1,4 @@
 import os
-import re
 import requests
 
 DATA_FILE = "data.txt"
@@ -29,15 +28,14 @@ def download(url):
         log(f"❌ 下载失败：{e}")
         return ""
 
-def parse_m3u(text):
-    """解析 M3U 格式频道名"""
+def parse_txt(text):
+    """解析 TXT 格式：频道名,URL"""
     channels = []
     for line in text.splitlines():
         line = line.strip()
-        if line.startswith("#EXTINF"):
-            m = re.search(r"#EXTINF:-1,(.+)", line)
-            if m:
-                name = m.group(1).strip()
+        if "," in line:
+            name = line.split(",", 1)[0].strip()
+            if name and not name.startswith("#"):
                 channels.append(name)
                 log(f"解析频道：{name}")
     return channels
@@ -97,12 +95,12 @@ def main():
     for url in urls:
         text = download(url)
         if text:
-            chs = parse_m3u(text)
+            chs = parse_txt(text)
             all_channels.extend(chs)
 
     log(f"解析到频道（含重复）：{len(all_channels)} 个")
 
-    # ⭐⭐⭐ 强力去重（保持顺序）
+    # ⭐ 强力去重
     all_channels = list(dict.fromkeys(all_channels))
     log(f"去重后频道数：{len(all_channels)}")
 
