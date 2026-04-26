@@ -91,7 +91,7 @@ def main():
                 if chn_name.startswith("http"):
                     continue
 
-                # 卫视优先
+                # 优先走固定分类
                 if is_weishi(chn_name):
                     result["卫视频道"].add(chn_name)
                 elif is_cctv(chn_name):
@@ -107,14 +107,15 @@ def main():
                 elif is_iptv(chn_name):
                     result["IPTV频道"].add(chn_name)
                 else:
-                    # 包含上海 → 归到上海频道
+                    # 自动归属省份：带上海 → 上海频道
                     if "上海" in chn_name:
-                        result["上海频道"].add(chn_name)
+                        prov = "上海频道"
                     else:
                         prov = clean_province(group_name)
-                        if prov not in result:
-                            result[prov] = set()
-                        result[prov].add(chn_name)
+
+                    if prov not in result:
+                        result[prov] = set()
+                    result[prov].add(chn_name)
 
         except Exception as e:
             log(f"失败: {str(e)}")
@@ -128,7 +129,7 @@ def main():
                 f.write(f"  {name}\n")
             f.write("\n")
 
-    log("✅ 完成：上海相关频道已归入上海省份频道，上海卫视保留在卫视频道")
+    log("✅ 完成：上海类频道归入上海省份频道，上海卫视保留在卫视频道")
 
 if __name__ == "__main__":
     main()
