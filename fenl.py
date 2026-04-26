@@ -20,14 +20,14 @@ result["华数频道"] = set()
 # 匹配正则
 pattern = re.compile(r'group-title="([^"]+)",([^ \n\r]+)', re.I)
 
-# 特殊央视付费频道，强制归为央视
+# 特殊央视付费频道
 special_cctv = {
     "CCTV世界地理", "CCTV兵器科技", "CCTV女性时尚", "CCTV怀旧剧场",
     "CCTV电视指南", "CCTV第一剧场", "CCTV风云剧场", "CCTV风云足球",
     "CCTV风云音乐", "CCTV高尔夫网球"
 }
 
-# 数字频道列表
+# 数字频道
 digital_channels = {
     "CETV-1", "CETV1", "CETV2", "CETV4",
     "CGTN俄语", "CGTN法语", "CGTN纪录", "CGTN英语",
@@ -91,11 +91,11 @@ def main():
                 if chn_name.startswith("http"):
                     continue
 
-                # 依次归类
-                if is_cctv(chn_name):
-                    result["央视频道"].add(chn_name)
-                elif is_weishi(chn_name):
+                # 卫视优先
+                if is_weishi(chn_name):
                     result["卫视频道"].add(chn_name)
+                elif is_cctv(chn_name):
+                    result["央视频道"].add(chn_name)
                 elif is_digital(chn_name):
                     result["数字频道"].add(chn_name)
                 elif is_movie(chn_name):
@@ -107,15 +107,18 @@ def main():
                 elif is_iptv(chn_name):
                     result["IPTV频道"].add(chn_name)
                 else:
-                    prov = clean_province(group_name)
-                    if prov not in result:
-                        result[prov] = set()
-                    result[prov].add(chn_name)
+                    # 包含上海 → 归到上海频道
+                    if "上海" in chn_name:
+                        result["上海频道"].add(chn_name)
+                    else:
+                        prov = clean_province(group_name)
+                        if prov not in result:
+                            result[prov] = set()
+                        result[prov].add(chn_name)
 
         except Exception as e:
             log(f"失败: {str(e)}")
 
-    # 写入文件
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         for cat, chns in result.items():
             if not chns:
@@ -125,7 +128,7 @@ def main():
                 f.write(f"  {name}\n")
             f.write("\n")
 
-    log("✅ 完成：央视+卫视+付费+IPTV+数字+电影+华数+省份频道，全部去重")
+    log("✅ 完成：上海相关频道已归入上海省份频道，上海卫视保留在卫视频道")
 
 if __name__ == "__main__":
     main()
