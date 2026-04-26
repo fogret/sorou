@@ -7,32 +7,19 @@ from collections import OrderedDict
 INPUT_FILE = "data.txt"
 OUTPUT_FILE = "fenl_output.txt"
 
-# 分类存储
+# 分类顺序固定
 result = OrderedDict()
 result["央视频道"] = set()
 result["卫视频道"] = set()
-result["付费频道"] = set()
-result["IPTV频道"] = set()
 result["数字频道"] = set()
 result["电影频道"] = set()
+result["付费频道"] = set()
+result["IPTV频道"] = set()
 result["华数频道"] = set()
+result["BesTV&iHOT频道"] = set()
 
 # 匹配正则
 pattern = re.compile(r'group-title="([^"]+)",([^ \n\r]+)', re.I)
-
-# 特殊央视付费频道
-special_cctv = {
-    "CCTV世界地理", "CCTV兵器科技", "CCTV女性时尚", "CCTV怀旧剧场",
-    "CCTV电视指南", "CCTV第一剧场", "CCTV风云剧场", "CCTV风云足球",
-    "CCTV风云音乐", "CCTV高尔夫网球"
-}
-
-# 数字频道
-digital_channels = {
-    "CETV-1", "CETV1", "CETV2", "CETV4",
-    "CGTN俄语", "CGTN法语", "CGTN纪录", "CGTN英语",
-    "CGTN西班牙语", "CGTN阿拉伯语"
-}
 
 def log(msg):
     print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}")
@@ -40,35 +27,7 @@ def log(msg):
 def clean_province(name):
     s = re.sub(r'电信|移动|联通|组播|\d+', '', name.strip())
     m = re.match(r'[\u4e00-\u9fa5]+', s)
-    if m:
-        return f"{m.group()}频道"
-    return s
-
-def is_cctv(name):
-    if name in special_cctv:
-        return True
-    return name.startswith("CCTV-") or "央视" in name
-
-def is_weishi(name):
-    return "卫视" in name
-
-def is_pay(name):
-    if name in special_cctv:
-        return False
-    pay_keys = ["付费", "精品", "高清", "4K", "购物", "测试", "导视", "VIP", "尊享", "数字"]
-    return any(k in name for k in pay_keys)
-
-def is_iptv(name):
-    return "IPTV" in name
-
-def is_digital(name):
-    return name in digital_channels
-
-def is_movie(name):
-    return "CHC" in name or "电影" in name
-
-def is_huashu(name):
-    return "华数" in name
+    return f"{m.group()}频道" if m else s
 
 def main():
     if not os.path.exists(INPUT_FILE):
@@ -91,28 +50,28 @@ def main():
                 if chn_name.startswith("http"):
                     continue
 
-                # 优先走固定分类
-                if is_weishi(chn_name):
+                # 优先级从上到下
+                if "卫视" in chn_name:
                     result["卫视频道"].add(chn_name)
-                elif is_cctv(chn_name):
+                elif chn_name.startswith("CCTV"):
                     result["央视频道"].add(chn_name)
-                elif is_digital(chn_name):
+                elif chn_name.startswith(("CETV", "CGTN")):
                     result["数字频道"].add(chn_name)
-                elif is_movie(chn_name):
+                elif "CHC" in chn_name or "电影" in chn_name:
                     result["电影频道"].add(chn_name)
-                elif is_huashu(chn_name):
+                elif "华数" in chn_name:
                     result["华数频道"].add(chn_name)
-                elif is_pay(chn_name):
-                    result["付费频道"].add(chn_name)
-                elif is_iptv(chn_name):
+                elif "BesTV" in chn_name or "iHOT" in chn_name:
+                    result["BesTV&iHOT频道"].add(chn_name)
+                elif "IPTV" in chn_name:
                     result["IPTV频道"].add(chn_name)
+                elif any(k in chn_name for k in ["付费", "4K", "高清", "购物", "VIP"]):
+                    result["付费频道"].add(chn_name)
                 else:
-                    # 自动归属省份：带上海 → 上海频道
                     if "上海" in chn_name:
                         prov = "上海频道"
                     else:
                         prov = clean_province(group_name)
-
                     if prov not in result:
                         result[prov] = set()
                     result[prov].add(chn_name)
@@ -129,7 +88,7 @@ def main():
                 f.write(f"  {name}\n")
             f.write("\n")
 
-    log("✅ 完成：上海类频道归入上海省份频道，上海卫视保留在卫视频道")
+    log("✅ 全部归类完成！")
 
 if __name__ == "__main__":
     main()
