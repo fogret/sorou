@@ -12,6 +12,7 @@ result = OrderedDict()
 result["央视频道"] = set()
 result["卫视频道"] = set()
 result["付费频道"] = set()
+result["IPTV频道"] = set()
 
 # 匹配正则
 pattern = re.compile(r'group-title="([^"]+)",([^ \n\r]+)', re.I)
@@ -20,7 +21,6 @@ def log(msg):
     print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}")
 
 def clean_province(name):
-    # 去掉运营商、组播、数字
     s = re.sub(r'电信|移动|联通|组播|\d+', '', name.strip())
     m = re.match(r'[\u4e00-\u9fa5]+', s)
     if m:
@@ -36,6 +36,9 @@ def is_weishi(name):
 def is_pay(name):
     pay_keys = ["付费", "精品", "高清", "4K", "购物", "测试", "导视", "VIP", "尊享", "数字"]
     return any(k in name for k in pay_keys)
+
+def is_iptv(name):
+    return "IPTV" in name
 
 def main():
     if not os.path.exists(INPUT_FILE):
@@ -58,13 +61,15 @@ def main():
                 if chn_name.startswith("http"):
                     continue
 
-                # 归类
+                # 依次归类
                 if is_cctv(chn_name):
                     result["央视频道"].add(chn_name)
                 elif is_weishi(chn_name):
                     result["卫视频道"].add(chn_name)
                 elif is_pay(chn_name):
                     result["付费频道"].add(chn_name)
+                elif is_iptv(chn_name):
+                    result["IPTV频道"].add(chn_name)
                 else:
                     prov = clean_province(group_name)
                     if prov not in result:
@@ -84,7 +89,7 @@ def main():
                 f.write(f"  {name}\n")
             f.write("\n")
 
-    log("✅ 完成：央视+卫视+付费独立分类 + 省份频道 + 全部去重")
+    log("✅ 完成：央视+卫视+付费+IPTV + 省份频道，全部去重")
 
 if __name__ == "__main__":
     main()
