@@ -1,144 +1,127 @@
+# 1. 导入必要的库：用于文件操作、正则表达式匹配
 import os
-import requests
 import re
 
-DATA_FILE = "data.txt"
+# 2. 定义输入输出文件路径
+INPUT_FILE = "data.txt"
 OUTPUT_FILE = "fenl_output.txt"
-MAX_LINE = 80
 
-# 全国省份
-PROVINCES = [
-    "北京","上海","天津","重庆","广东","广西","江苏","浙江","山东","山西","河南","河北",
-    "湖北","湖南","安徽","江西","福建","海南","四川","云南","陕西","甘肃","青海","宁夏","新疆",
-    "内蒙古","黑龙江","吉林","辽宁","香港","澳门","台湾","贵州"
-]
+# 3. 定义分类关键词和对应的正则匹配模式
+#    键：分类名称，值：用于匹配频道分类的正则表达式
+CATEGORY_PATTERNS = {
+    "央视频道": re.compile(r"央视|CCTV"),
+    "卫视频道": re.compile(r"卫视|中国.*卫视"),
+    "付费频道": re.compile(r"付费|HD|高清"),
+    "电影频道": re.compile(r"电影"),
+    "数字频道": re.compile(r"数字|TV"),
+    # 地方频道需特殊处理，后续单独按省份匹配
+}
 
-def log(msg):
-    print(f"[LOG] {msg}", flush=True)
+# 4. 定义中国大陆省份简称与全称的映射，用于解析地方频道
+PROVINCE_MAP = {
+    "京": "北京", "津": "天津", "冀": "河北", "晋": "山西", "蒙": "内蒙古",
+    "辽": "辽宁", "吉": "吉林", "黑": "黑龙江",
+    "沪": "上海", "苏": "江苏", "浙": "浙江", "皖": "安徽", "闽": "福建", "赣": "江西", "鲁": "山东",
+    "豫": "河南", "鄂": "湖北", "湘": "湖南", "粤": "广东", "桂": "广西", "琼": "海南",
+    "渝": "重庆", "川": "四川", "贵": "贵州", "云": "云南",
+    "陕": "陕西", "甘": "甘肃", "青": "青海", "宁": "宁夏", "新": "新疆",
+    # 可根据需要补充其他省份
+}
 
-def download(url):
-    log(f"下载：{url}")
-    try:
-        r = requests.get(url, timeout=10)
-        r.raise_for_status()
-        return r.text
-    except Exception as e:
-        log(f"❌ 下载失败：{e}")
-        return ""
+# 5. 初始化数据结构，用于存储去重后的频道信息
+#    结构：{分类名: {频道名: 链接}}
+channel_data = {}
+for category in CATEGORY_PATTERNS.keys():
+    channel_data[category] = {}
 
-def parse_txt(text):
-    """解析 TXT 格式：频道名,URL"""
-    channels = []
-    for line in text.splitlines():
-        line = line.strip()
-        if "," in line:
-            name = line.split(",", 1)[0].strip()
-            if name and not name.startswith("#"):
-                channels.append(name)
-                log(f"解析频道：{name}")
-    return channels
+# 地方频道单独存储，结构：{省份名: {频道名: 链接}}
+local_channels = {}
 
-def extract_province(name):
-    """频道名以省份开头"""
-    for prov in PROVINCES:
-        if name.startswith(prov):
-            return prov
-    return None
-
-def extract_city(name, prov):
+# 6. 读取并解析根目录下的data.txt文件
+def parse_data_file(file_path):
     """
-    提取地市：
-    规则：频道名以 2~4 个汉字开头，且不是省份名
+    解析data.txt文件，提取频道链接和名称
     """
-    m = re.match(r"^([\u4e00-\u9fa5]{2,4})", name)
-    if m:
-        city = m.group(1)
-        if city != prov:
-            return city
-    return None
-
-def classify(name):
-    prov = extract_province(name)
-    if prov:
-        city = extract_city(name, prov)
-        if city:
-            return f"地方频道-{prov}-{city}"
-        return f"地方频道-{prov}"
-
-    return "未知频道"
-
-def format_horizontal(name, items):
-    lines = []
-    line = name + "："
-
-    for item in items:
-        part = item + ", "
-        if len(line) + len(part) > MAX_LINE:
-            lines.append(line.rstrip(", "))
-            line = " " * (len(name) + 1) + part
-        else:
-            line += part
-
-    lines.append(line.rstrip(", "))
-    return "\n".join(lines)
-
-def main():
-    if not os.path.exists(DATA_FILE):
-        log("❌ data.txt 不存在")
+    if not os.path.exists(file_path):
+        print(f"错误：未找到文件 {file_path}")
         return
 
-    with open(DATA_FILE, "r", encoding="utf-8") as f:
-        urls = [x.strip() for x in f if x.strip()]
+    with open(file_path, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
 
-    log(f"读取到 {len(urls)} 个链接")
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
 
-    all_channels = []
+        # 7. 尝试匹配链接和频道名的模式
+        #    常见格式：#EXTINF:-1 tvg-name="频道名" tvg-id="",链接地址
+        match = re.match(r'#EXTINF:-1\s+tvg-name="([^"]+)"\s+tvg-id="[^"]*",\s*(.+)', line)
+        if match:
+            channel_name = match.group(1).strip()
+            link = match.group(2).strip()
+            classify_channel(channel_name, link)
 
-    for url in urls:
-        text = download(url)
-        if text:
-            chs = parse_txt(text)
-            all_channels.extend(chs)
+# 8. 定义频道分类逻辑
+def classify_channel(channel_name, link):
+    """
+    根据频道名将频道分类并去重存储
+    """
+    # 优先按预设分类匹配
+    for category, pattern in CATEGORY_PATTERNS.items():
+        if pattern.search(channel_name):
+            # 去重：如果该频道名不存在于该分类中，则添加
+            if channel_name not in channel_data[category]:
+                channel_data[category][channel_name] = link
+            return
 
-    log(f"解析到频道（含重复）：{len(all_channels)} 个")
+    # 未匹配到预设分类，尝试匹配地方频道
+    match_province = re.match(r'([^省市]+省|.+自治区|[^省市]+市)', channel_name)
+    if match_province:
+        province = match_province.group(1)
+        # 简化省份名（如“北京市”->“北京”）
+        for abbr, full in PROVINCE_MAP.items():
+            if province.startswith(full) or province.startswith(abbr):
+                province = full
+                break
+        # 初始化省份存储
+        if province not in local_channels:
+            local_channels[province] = {}
+        # 去重并添加
+        if channel_name not in local_channels[province]:
+            local_channels[province][channel_name] = link
+        return
 
-    # 去重
-    all_channels = list(dict.fromkeys(all_channels))
-    log(f"去重后频道数：{len(all_channels)}")
+    # 9. 未匹配到任何分类的频道，可根据需要处理
+    #    这里暂时忽略，也可添加到“其他分类”
 
-    groups = {}
+# 10. 执行解析
+parse_data_file(INPUT_FILE)
 
-    for ch in all_channels:
-        c = classify(ch)
-        log(f"分类：{ch} → {c}")
-        groups.setdefault(c, []).append(ch)
+# 11. 将解析结果写入输出文件fenl_output.txt
+def write_output_file():
+    """
+    将分类后的频道信息写入输出文件
+    """
+    with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
+        # 写入预设分类
+        for category, channels in channel_data.items():
+            if channels:
+                f.write(f"【{category}】\n")
+                for name, link in sorted(channels.items()):
+                    f.write(f"{name},{link}\n")
+                f.write("\n")
 
-    for k in groups:
-        groups[k].sort()
+        # 写入地方频道分类
+        if local_channels:
+            f.write("【地方频道】\n")
+            for province, channels in sorted(local_channels.items()):
+                f.write(f"  【{province}】\n")
+                for name, link in sorted(channels.items()):
+                    f.write(f"    {name},{link}\n")
+                f.write("\n")
 
-    output = []
+    print(f"解析完成！结果已保存至 {OUTPUT_FILE}")
 
-    # 省级频道
-    for prov in PROVINCES:
-        key = f"地方频道-{prov}"
-        if key in groups:
-            output.append(format_horizontal(key, groups[key]))
-            output.append("")
-
-    # 地市频道
-    for key in sorted(groups.keys()):
-        if key.count("-") == 2:  # 地方频道-省-市
-            output.append(format_horizontal(key, groups[key]))
-            output.append("")
-
-    # 未知频道
-    if "未知频道" in groups:
-        output.append(format_horizontal("未知频道", groups["未知频道"]))
-
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        f.write("\n".join(output))
-
-    log(f"✔ 分类完成 → {OUTPUT_FILE}")
-
-if __name__ == "__main__":
-    main()
+# 12. 执行写入
+write_output_file()
