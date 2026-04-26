@@ -14,7 +14,7 @@ def log(msg):
     print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}")
 
 def clean_province(name):
-    # 去掉电信、移动、联通、组播等字样
+    # 去掉电信、移动、联通、组播、数字等字样
     s = re.sub(r'电信|移动|联通|组播|\d+', '', name.strip())
     # 提取纯省份文字
     m = re.match(r'[\u4e00-\u9fa5]+', s)
@@ -23,7 +23,7 @@ def clean_province(name):
     return s
 
 def main():
-    if not os.exists(INPUT_FILE):
+    if not os.path.exists(INPUT_FILE):
         log(f"未找到 {INPUT_FILE}")
         return
 
