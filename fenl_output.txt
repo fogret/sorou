@@ -162,6 +162,70 @@
   西安乐购购物
   试播4K超高清
 
+IPTV频道
+  IPTV1
+  IPTV10
+  IPTV10解密
+  IPTV10野外
+  IPTV11戏曲
+  IPTV12
+  IPTV12法治
+  IPTV14早教
+  IPTV15音乐
+  IPTV15音乐现场
+  IPTV2
+  IPTV3
+  IPTV3(轮播)
+  IPTV3+
+  IPTV3综艺
+  IPTV4
+  IPTV5
+  IPTV5(轮播)
+  IPTV5+
+  IPTV5体育
+  IPTV5足球
+  IPTV6
+  IPTV6华数电影
+  IPTV6电影
+  IPTV7
+  IPTV7军事
+  IPTV8+
+  IPTV8电视剧
+  IPTV体育
+  IPTV军事
+  IPTV台球
+  IPTV国学
+  IPTV地理
+  IPTV墨宝
+  IPTV好学生
+  IPTV戏曲
+  IPTV收视指南
+  IPTV早教
+  IPTV武术
+  IPTV法治
+  IPTV爱生活
+  IPTV生活
+  IPTV相声小品
+  IPTV综艺
+  IPTV美人
+  IPTV美妆
+  IPTV解密
+  IPTV赛事频道
+  IPTV足球
+  IPTV野外
+  IPTV鉴赏
+  IPTV靓妆
+  IPTV音乐
+  IPTV音乐现场
+  IPTV魅力时尚
+  北京IPTV淘BABY
+  北京IPTV淘剧场
+  北京IPTV淘娱乐
+  北京IPTV淘电影
+  北京IPTV萌宠TV
+  广西IPTV7
+  广西IPTV8
+
 河南频道
   CETV-1
   CETV1
@@ -176,21 +240,6 @@
   CHC动作电影
   CHC家庭影院
   CHC影迷电影
-  IPTV体育
-  IPTV军事
-  IPTV国学
-  IPTV地理
-  IPTV好学生
-  IPTV收视指南
-  IPTV早教
-  IPTV法治
-  IPTV生活
-  IPTV相声小品
-  IPTV综艺
-  IPTV美妆
-  IPTV足球
-  IPTV野外
-  IPTV音乐
   三门峡新闻综合
   上海东方财经
   上海乐游纪实
@@ -367,31 +416,8 @@
   CGTN英语
   CGTN西班牙语
   CGTN阿拉伯语
-  IPTV10解密
-  IPTV11戏曲
-  IPTV14早教
-  IPTV15音乐现场
-  IPTV5足球
-  IPTV7军事
-  IPTV台球
-  IPTV国学
-  IPTV地理
-  IPTV墨宝
-  IPTV好学生
-  IPTV收视指南
-  IPTV武术
-  IPTV爱生活
-  IPTV美人
-  IPTV美妆
-  IPTV足球
-  IPTV鉴赏
   中国交通
   光影
-  北京IPTV淘BABY
-  北京IPTV淘剧场
-  北京IPTV淘娱乐
-  北京IPTV淘电影
-  北京IPTV萌宠TV
   北京体育休闲
   北京卡酷少儿
   北京国际频道
@@ -790,13 +816,6 @@
   CGTN纪录
   CGTN英语
   CHC动作电影
-  IPTV3+
-  IPTV3综艺
-  IPTV体育
-  IPTV法治
-  IPTV相声小品
-  IPTV野外
-  IPTV魅力时尚
   中国交通
   中国天气
   北京纪实科教
@@ -870,27 +889,6 @@
   CGTN纪录
   CGTN英语
   CGTN记录
-  IPTV3+
-  IPTV5+
-  IPTV8+
-  IPTV军事
-  IPTV台球
-  IPTV国学
-  IPTV地理
-  IPTV墨宝
-  IPTV好学生
-  IPTV戏曲
-  IPTV收视指南
-  IPTV早教
-  IPTV武术
-  IPTV法治
-  IPTV爱生活
-  IPTV相声小品
-  IPTV美人
-  IPTV解密
-  IPTV足球
-  IPTV野外
-  IPTV音乐现场
   万宁综合
   三亚1
   三亚1台
@@ -947,29 +945,6 @@
 
 重庆频道
   CGTN英语
-  IPTV10野外
-  IPTV11戏曲
-  IPTV12法治
-  IPTV14早教
-  IPTV15音乐
-  IPTV3综艺
-  IPTV5体育
-  IPTV6华数电影
-  IPTV7军事
-  IPTV8电视剧
-  IPTV国学
-  IPTV地理
-  IPTV墨宝
-  IPTV好学生
-  IPTV武术
-  IPTV爱生活
-  IPTV相声小品
-  IPTV美人
-  IPTV美妆
-  IPTV解密
-  IPTV足球
-  IPTV野外
-  IPTV鉴赏
   光影
   华数军旅剧场
   华数动作影院
@@ -1012,10 +987,6 @@
   CETV2
   CGTN英语
   ELTV
-  IPTV3综艺
-  IPTV5体育
-  IPTV6华数电影
-  IPTV8电视剧
   XHTV
   东乌旗
   丰镇电视台
@@ -1124,14 +1095,6 @@
   CHC动作电影
   CHC家庭影院
   CHC影迷电影
-  IPTV1
-  IPTV10
-  IPTV2
-  IPTV3
-  IPTV4
-  IPTV5
-  IPTV6
-  IPTV7
   中国交通
   云南娱乐频道
   云南少儿频道
@@ -1570,7 +1533,6 @@
   CHC家庭影院
   CHC影迷电影
   GCTN英语
-  IPTV靓妆
   先锋乒羽
   快乐垂钓
   房县综合
@@ -1658,9 +1620,6 @@
   CETV2
   CETV4
   CGTN
-  IPTV12
-  IPTV5体育
-  IPTV6电影
   北海新闻
   南宁公共频道
   南宁影视娱乐
@@ -1668,8 +1627,6 @@
   南宁新闻综合
   卡酷动画
   嘉佳卡通
-  广西IPTV7
-  广西IPTV8
   广西国际频道
   广西影视频道
   广西新闻频道
@@ -1697,7 +1654,6 @@
   BesTV看天下
   BesTV谍战剧场
   CETV1
-  IPTV5体育
   上海乐游频道
   上海动漫秀场
   上海哈哈炫动
@@ -1807,27 +1763,6 @@
   CHC动作电影
   CHC家庭影院
   CHC影迷电影
-  IPTV10野外
-  IPTV11戏曲
-  IPTV12法治
-  IPTV14早教
-  IPTV15音乐
-  IPTV3综艺
-  IPTV5体育
-  IPTV6华数电影
-  IPTV7军事
-  IPTV8电视剧
-  IPTV地理
-  IPTV墨宝
-  IPTV好学生
-  IPTV收视指南
-  IPTV爱生活
-  IPTV相声小品
-  IPTV美人
-  IPTV美妆
-  IPTV解密
-  IPTV足球
-  IPTV鉴赏
   中国天气
   光影
   华数军旅剧场
@@ -2037,7 +1972,6 @@
   GCTN英语
   HZTV-1
   HZTV-2
-  IPTV5体育
   东莞新闻综合
   东莞生活资讯
   中山综合频道
@@ -2143,7 +2077,6 @@
   CHC动作电影
   CHC家庭影院
   CHC影迷电影
-  IPTV赛事频道
   上海东方财经
   上海乐游频道
   上海动漫秀场
@@ -2271,11 +2204,6 @@
   CGTN-英语
   CGTN-西班牙语
   CGTN-阿拉伯语
-  IPTV3(轮播)
-  IPTV5(轮播)
-  IPTV地理
-  IPTV爱生活
-  IPTV足球
   上海乐游
   上海动漫秀场
   上海法治天地
