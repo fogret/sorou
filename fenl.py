@@ -6,9 +6,14 @@ DATA_FILE = "data.txt"
 OUTPUT_FILE = "fenl_output.txt"
 MAX_LINE = 80
 
-# 省份关键字
-PROVINCES = [
-    "贵州","北京","上海","天津","重庆","广东","广西","江苏","浙江","山东","山西","河南","河北",
+# 贵州全套关键字（必须放最前）
+GUIZHOU_KEYS = [
+    "贵州","贵阳","遵义","六盘水","安顺","毕节","铜仁","黔东南","黔南","黔西南"
+]
+
+# 省份关键字（贵州优先）
+PROVINCES = GUIZHOU_KEYS + [
+    "北京","上海","天津","重庆","广东","广西","江苏","浙江","山东","山西","河南","河北",
     "湖北","湖南","安徽","江西","福建","海南","四川","云南","陕西","甘肃","青海","宁夏","新疆",
     "内蒙古","黑龙江","吉林","辽宁","香港","澳门","台湾"
 ]
@@ -46,6 +51,14 @@ def extract_channels(m3u_text):
 def classify_channel(name):
     n = name.upper()
 
+    # ⭐ 贵州卫视系列（必须放最前）
+    if name.startswith("贵州卫视"):
+        return "地方频道_贵州"
+
+    # ⭐ 贵州地市识别（必须优先）
+    if any(k in name for k in GUIZHOU_KEYS):
+        return "地方频道_贵州"
+
     # 央视频道
     if "CCTV" in n or "央视" in name:
         return "央视频道"
@@ -54,7 +67,7 @@ def classify_channel(name):
     if any(k in name for k in PAY_CHANNEL_KEYWORDS):
         return "付费频道"
 
-    # 卫视频道
+    # 卫视频道（贵州卫视已被上面拦截）
     if "卫视" in name:
         return "卫视频道"
 
@@ -68,26 +81,28 @@ def classify_channel(name):
     if any(k in name for k in DIGITAL_KEYWORDS):
         return "数字频道"
 
-    # 地方频道（按省份）
+    # 其它省份地方频道
     for prov in PROVINCES:
         if prov in name:
             return f"地方频道_{prov}"
 
-    # ⭐ 无法分类 → 未知频道
+    # ⭐ 未知频道
     return "未知频道"
 
 def format_horizontal(name, items):
+    """横向输出，用逗号分隔，自动换行"""
     lines = []
     line = name + "："
 
     for item in items:
-        if len(line) + len(item) + 1 > MAX_LINE:
-            lines.append(line)
-            line = " " * (len(name) + 1) + item
+        part = item + ", "
+        if len(line) + len(part) > MAX_LINE:
+            lines.append(line.rstrip(", "))
+            line = " " * (len(name) + 1) + part
         else:
-            line += " " + item
+            line += part
 
-    lines.append(line)
+    lines.append(line.rstrip(", "))
     return "\n".join(lines)
 
 def main():
@@ -120,7 +135,7 @@ def main():
         "电影频道": [],
         "数字频道": [],
         "地方频道_贵州": [],  # 贵州优先
-        "未知频道": [],         # ⭐ 新增
+        "未知频道": [],         # 未知频道
     }
 
     # 其它省份地方频道
@@ -144,14 +159,8 @@ def main():
             groups.setdefault(c, []).append(ch)
 
     # 排序
-    groups["电影频道_CHC"].sort()
-    groups["电影频道"].sort()
-    groups["央视频道"].sort()
-    groups["付费频道"].sort()
-    groups["卫视频道"].sort()
-    groups["数字频道"].sort()
-    groups["地方频道_贵州"].sort()
-    groups["未知频道"].sort()
+    for key in groups:
+        groups[key].sort()
 
     # 其它省份按拼音排序
     sorted_provinces = sorted(other_province_groups.keys())
@@ -168,7 +177,7 @@ def main():
         "电影频道",
         "数字频道",
         "地方频道_贵州",
-        "未知频道"   # ⭐ 新增
+        "未知频道"
     ]
 
     for key in order:
@@ -178,7 +187,7 @@ def main():
             output_lines.append("")
 
     # 其它省份
-    for prov in sorted_provinces:
+    for prov in sorted_province_groups:
         items = sorted(other_province_groups[prov])
         output_lines.append(format_horizontal(f"地方频道-{prov}", items))
         output_lines.append("")
