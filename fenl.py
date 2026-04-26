@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
 import re
-import requests
 
 def main():
     # 配置
@@ -13,47 +12,45 @@ def main():
         print(f"错误：未找到 {input_file}")
         return
 
-    urls = []
+    lines = []
     with open(input_file, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line.startswith("http"):
-                urls.append(line)
+        lines = [line.strip() for line in f if line.strip()]
 
-    if not urls:
-        print("错误：无有效链接")
+    if not lines:
+        print("错误：文件为空")
         return
 
-    # 解析
+    # 解析 EXTINF 格式
+    # 示例：#EXTINF:-1 group-title="河南电信-组播1",河南卫视
     groups = {}
-    for url in urls:
-        print(f"正在解析: {url}")
-        try:
-            resp = requests.get(url, timeout=15)
-            resp.raise_for_status()
-            content = resp.text
-        except Exception as e:
-            print(f"错误: {e}")
-            continue
+    for line in lines:
+        # 匹配 group-title="xxx"
+        match = re.search(r'group-title="([^"]+)"', line)
+        if match:
+            group = match.group(1)
+            if group not in groups:
+                groups[group] = []
+            # 提取频道名 (逗号后 )
+            chan_name = re.sub(r'^[^,]+,\s*', '', line).strip()
+            if chan_name:
+                groups[group].append(chan_name)
 
-        # 按 EXTINF 分组解析
-        pattern = r'group-title="([^"]+)"'
-        matches = re.findall(pattern, content)
-        for match in matches:
-            if match not in groups:
-                groups[match] = []
-            # 模拟频道列表 (实际应从 content 解析)
-            groups[match].append(f"示例频道 - {match}")
-
-    # 去重
+    # 去重，保持顺序
     for g in groups:
-        groups[g] = list(set(groups[g]))
+        seen = set()
+        unique = []
+        for item in groups[g]:
+            if item not in seen:
+                seen.add(item)
+                unique.append(item)
+        groups[g] = unique
 
-    # 写入
+    # 写入结果
     with open(output_file, "w", encoding="utf-8") as f:
         for group, chans in groups.items():
-            f.write(f"{group}\n")
-            f.write(" | ".join(chans) + "\n\n")
+            f.write(f"\n【{group}】\n")
+            for chan in chans:
+                f.write(f" - {chan}\n")
 
     print(f"完成！结果已写入: {output_file}")
 
