@@ -1,19 +1,17 @@
 import os
 import requests
+import re
 
 DATA_FILE = "data.txt"
 OUTPUT_FILE = "fenl_output.txt"
 MAX_LINE = 80
 
+# 全国省份
 PROVINCES = [
     "北京","上海","天津","重庆","广东","广西","江苏","浙江","山东","山西","河南","河北",
     "湖北","湖南","安徽","江西","福建","海南","四川","云南","陕西","甘肃","青海","宁夏","新疆",
     "内蒙古","黑龙江","吉林","辽宁","香港","澳门","台湾","贵州"
 ]
-
-SATELLITE = [p + "卫视" for p in PROVINCES]
-PAY_CHANNEL = ["欢笑剧场","都市剧场","精品","CHC","动作电影","家庭影院","影迷电影","高清电影","影院"]
-DIGITAL = ["CCTV5+","CCTV17","数字","纪实","科教","卡通","少儿","新闻","法治","音乐"]
 
 def log(msg):
     print(f"[LOG] {msg}", flush=True)
@@ -40,28 +38,32 @@ def parse_txt(text):
                 log(f"解析频道：{name}")
     return channels
 
-def classify(name):
-    upper = name.upper()
-
-    if "CCTV" in upper or "央视" in name:
-        return "央视频道"
-
-    for s in SATELLITE:
-        if s in name:
-            return "卫视频道"
-
-    if any(k in name for k in PAY_CHANNEL):
-        return "付费频道"
-
-    if "CHC" in upper or "电影" in name:
-        return "电影频道"
-
-    if any(k in name for k in DIGITAL):
-        return "数字频道"
-
+def extract_province(name):
+    """频道名以省份开头"""
     for prov in PROVINCES:
-        if prov in name:
-            return f"地方频道-{prov}"
+        if name.startswith(prov):
+            return prov
+    return None
+
+def extract_city(name, prov):
+    """
+    提取地市：
+    规则：频道名以 2~4 个汉字开头，且不是省份名
+    """
+    m = re.match(r"^([\u4e00-\u9fa5]{2,4})", name)
+    if m:
+        city = m.group(1)
+        if city != prov:
+            return city
+    return None
+
+def classify(name):
+    prov = extract_province(name)
+    if prov:
+        city = extract_city(name, prov)
+        if city:
+            return f"地方频道-{prov}-{city}"
+        return f"地方频道-{prov}"
 
     return "未知频道"
 
@@ -100,7 +102,7 @@ def main():
 
     log(f"解析到频道（含重复）：{len(all_channels)} 个")
 
-    # ⭐ 强力去重
+    # 去重
     all_channels = list(dict.fromkeys(all_channels))
     log(f"去重后频道数：{len(all_channels)}")
 
@@ -116,18 +118,20 @@ def main():
 
     output = []
 
-    order = ["央视频道","卫视频道","付费频道","电影频道","数字频道"]
-
-    for key in order:
+    # 省级频道
+    for prov in PROVINCES:
+        key = f"地方频道-{prov}"
         if key in groups:
             output.append(format_horizontal(key, groups[key]))
             output.append("")
 
+    # 地市频道
     for key in sorted(groups.keys()):
-        if key.startswith("地方频道-"):
+        if key.count("-") == 2:  # 地方频道-省-市
             output.append(format_horizontal(key, groups[key]))
             output.append("")
 
+    # 未知频道
     if "未知频道" in groups:
         output.append(format_horizontal("未知频道", groups["未知频道"]))
 
