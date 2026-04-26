@@ -13,6 +13,7 @@ result["央视频道"] = set()
 result["卫视频道"] = set()
 result["付费频道"] = set()
 result["IPTV频道"] = set()
+result["数字频道"] = set()
 
 # 匹配正则
 pattern = re.compile(r'group-title="([^"]+)",([^ \n\r]+)', re.I)
@@ -22,6 +23,13 @@ special_cctv = {
     "CCTV世界地理", "CCTV兵器科技", "CCTV女性时尚", "CCTV怀旧剧场",
     "CCTV电视指南", "CCTV第一剧场", "CCTV风云剧场", "CCTV风云足球",
     "CCTV风云音乐", "CCTV高尔夫网球"
+}
+
+# 数字频道列表
+digital_channels = {
+    "CETV-1", "CETV1", "CETV2", "CETV4",
+    "CGTN俄语", "CGTN法语", "CGTN纪录", "CGTN英语",
+    "CGTN西班牙语", "CGTN阿拉伯语"
 }
 
 def log(msg):
@@ -43,7 +51,6 @@ def is_weishi(name):
     return "卫视" in name
 
 def is_pay(name):
-    # 已经归到央视的，不再算付费
     if name in special_cctv:
         return False
     pay_keys = ["付费", "精品", "高清", "4K", "购物", "测试", "导视", "VIP", "尊享", "数字"]
@@ -51,6 +58,9 @@ def is_pay(name):
 
 def is_iptv(name):
     return "IPTV" in name
+
+def is_digital(name):
+    return name in digital_channels
 
 def main():
     if not os.path.exists(INPUT_FILE):
@@ -78,6 +88,8 @@ def main():
                     result["央视频道"].add(chn_name)
                 elif is_weishi(chn_name):
                     result["卫视频道"].add(chn_name)
+                elif is_digital(chn_name):
+                    result["数字频道"].add(chn_name)
                 elif is_pay(chn_name):
                     result["付费频道"].add(chn_name)
                 elif is_iptv(chn_name):
@@ -101,7 +113,7 @@ def main():
                 f.write(f"  {name}\n")
             f.write("\n")
 
-    log("✅ 完成：央视+卫视+付费+IPTV + 省份频道，全部去重")
+    log("✅ 完成：央视+卫视+付费+IPTV+数字频道 + 省份频道，全部去重")
 
 if __name__ == "__main__":
     main()
