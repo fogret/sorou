@@ -9,72 +9,35 @@ INPUT_FILE = "data.txt"
 OUTPUT_FILE = "fenl_output.txt"
 TIMEOUT = 20
 
-# 存储结构
 categories = OrderedDict()
 total_channels = 0
 
-# 通用正则
-genre_re   = re.compile(r'^\s*([^,#]+)\s*,\s*#genre#', re.I)
-channel_re = re.compile(r'^\s*([^,#]+?)\s*,\s*(https?://\S+)', re.I)
-# m3u 专用
-extinf_re  = re.compile(r'#EXTINF:-1,(.*)', re.I)
-url_re     = re.compile(r'^(https?://\S+)', re.I)
+# 精准匹配你这种格式
+pattern = re.compile(
+    r'#EXTINF:-1\s+group-title="([^"]+)",([^ ]+)\s+(https?://\S+)',
+    re.IGNORECASE
+)
 
 def log(msg):
     now = time.strftime("%Y-%m-%d %H:%M:%S")
     print(f"[{now}] {msg}")
 
-def parse_content(content):
+def parse_content(text):
     global total_channels
-    current_genre = "默认频道"
-    current_name = None
     count = 0
+    matches = pattern.findall(text)
 
-    lines = content.splitlines()
-    for line in lines:
-        line = line.strip()
-        if not line:
-            continue
+    for group, name, url in matches:
+        group = group.strip()
+        name = name.strip()
+        url = url.strip()
 
-        # 1. 分类行
-        g_match = genre_re.search(line)
-        if g_match:
-            current_genre = g_match.group(1).strip()
-            if current_genre not in categories:
-                categories[current_genre] = OrderedDict()
-            continue
-
-        # 2. 普通频道格式：名称,链接
-        c_match = channel_re.search(line)
-        if c_match:
-            name = c_match.group(1).strip()
-            url  = c_match.group(2).strip()
-            if current_genre not in categories:
-                categories[current_genre] = OrderedDict()
-            if url not in categories[current_genre]:
-                categories[current_genre][url] = (name, url)
-                total_channels += 1
-                count += 1
-            continue
-
-        # 3. m3u 格式 #EXTINF:-1,频道名
-        ext_match = extinf_re.search(line)
-        if ext_match:
-            current_name = ext_match.group(1).strip()
-            continue
-
-        # 4. m3u 链接行
-        if current_name and url_re.search(line):
-            url = line.strip()
-            if current_genre not in categories:
-                categories[current_genre] = OrderedDict()
-            if url not in categories[current_genre]:
-                categories[current_genre][url] = (current_name, url)
-                total_channels += 1
-                count += 1
-            current_name = None
-            continue
-
+        if group not in categories:
+            categories[group] = OrderedDict()
+        if url not in categories[group]:
+            categories[group][url] = (name, url)
+            total_channels += 1
+            count += 1
     return count
 
 def main():
