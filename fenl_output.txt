@@ -236,7 +236,7 @@ IPTV频道
   广西IPTV7
   广西IPTV8
 
-河南频道
+数字频道
   CETV-1
   CETV1
   CETV2
@@ -247,6 +247,8 @@ IPTV频道
   CGTN英语
   CGTN西班牙语
   CGTN阿拉伯语
+
+河南频道
   CHC动作电影
   CHC家庭影院
   CHC影迷电影
@@ -383,10 +385,6 @@ IPTV频道
   鹤壁新闻综合
 
 青海频道
-  CETV1
-  CETV2
-  CETV4
-  CGTN英语
   上海东方财经
   上海乐游频道
   上海动漫秀场
@@ -417,15 +415,6 @@ IPTV频道
   青海都市
 
 北京频道
-  CETV1
-  CETV2
-  CETV4
-  CGTN俄语
-  CGTN法语
-  CGTN纪录
-  CGTN英语
-  CGTN西班牙语
-  CGTN阿拉伯语
   中国交通
   光影
   北京体育休闲
@@ -478,17 +467,8 @@ IPTV频道
 河北频道
   CETV-2
   CETV-4
-  CETV1
-  CETV2
-  CETV4
   CETV早期教育
-  CGTN俄语
-  CGTN法语
-  CGTN纪录
-  CGTN英语
-  CGTN西班牙语
   CGTN记录
-  CGTN阿拉伯语
   三河综合频道
   上海东方财经
   上海乐游频道
@@ -670,15 +650,8 @@ IPTV频道
   黄骅电视台
 
 湖南频道
-  CETV-1
   CETV-4
   CETV早期教育
-  CGTN俄语
-  CGTN法语
-  CGTN纪录
-  CGTN英语
-  CGTN西班牙语
-  CGTN阿拉伯语
   CHC动作电影
   CHC家庭影院
   CHC影迷电影
@@ -778,10 +751,6 @@ IPTV频道
   麻阳综合频道
 
 上海频道
-  CETV1
-  CETV2
-  CETV4
-  CGTN英语
   上海教育
   东方影视
   东方财经
@@ -808,13 +777,6 @@ IPTV频道
   金鹰纪实
 
 福建频道
-  CETV1
-  CETV2
-  CETV4
-  CGTN俄语
-  CGTN法语
-  CGTN纪录
-  CGTN英语
   CHC动作电影
   中国交通
   中国天气
@@ -856,12 +818,6 @@ IPTV频道
 
 陕西频道
   BesTV体育
-  CETV1
-  CETV2
-  CETV4
-  CGTN法语
-  CGTN英语
-  CGTN西班牙语
   上海欢笑剧场
   优漫卡通
   卡酷少儿
@@ -883,11 +839,6 @@ IPTV频道
   陕西银铃频道
 
 海南频道
-  CETV1
-  CETV2
-  CETV4
-  CGTN纪录
-  CGTN英语
   CGTN记录
   万宁综合
   三亚1
@@ -944,7 +895,6 @@ IPTV频道
   陵水TV
 
 重庆频道
-  CGTN英语
   光影
   华数军旅剧场
   华数动作影院
@@ -983,9 +933,6 @@ IPTV频道
   金鹰卡通
 
 内蒙古频道
-  CETV1
-  CETV2
-  CGTN英语
   ELTV
   XHTV
   东乌旗
@@ -1073,15 +1020,6 @@ IPTV频道
   额济纳新闻综合
 
 云南频道
-  CETV1
-  CETV2
-  CETV4
-  CGTN俄语
-  CGTN法语
-  CGTN纪录
-  CGTN英语
-  CGTN西班牙语
-  CGTN阿拉伯语
   CHC动作电影
   CHC家庭影院
   CHC影迷电影
@@ -1131,15 +1069,7 @@ IPTV频道
 
 山东频道
   BRTV纪实科教
-  CETV1
-  CETV4
   CGTN
-  CGTN俄语
-  CGTN法语
-  CGTN纪录
-  CGTN英语
-  CGTN西班牙语
-  CGTN阿拉伯语
   CHC动作电影
   CHC家庭影院
   CHC影迷电影
@@ -1331,9 +1261,6 @@ IPTV频道
   金华新闻
 
 山西频道
-  CETV1
-  CETV2
-  CETV4
   CETV早期教育
   CHC动作电影
   CHC家庭影院
@@ -1390,7 +1317,6 @@ IPTV频道
   黄河电视台
 
 安徽频道
-  CETV-1
   上海东方财经
   上海乐游纪实
   上海动漫秀场
@@ -1487,11 +1413,6 @@ IPTV频道
   BRTV卡酷少儿
   CCTV
   CCTV5+体育赛事
-  CETV1
-  CETV2
-  CETV4
-  CGTN法语
-  CGTN西班牙语
   CGTN记录片
   CHC-动作电影
   CHC-家庭影院
@@ -1529,15 +1450,6 @@ IPTV频道
   阳新综合
 
 贵州频道
-  CETV1
-  CETV2
-  CETV4
-  CGTN俄语
-  CGTN法语
-  CGTN纪录
-  CGTN英语
-  CGTN西班牙语
-  CGTN阿拉伯语
   优漫卡通
   六盘水-1
   六盘水-2
@@ -1574,9 +1486,6 @@ IPTV频道
   黔西南综合频道
 
 广西频道
-  CETV1
-  CETV2
-  CETV4
   CGTN
   北海新闻
   南宁公共频道
@@ -1611,7 +1520,6 @@ IPTV频道
   BesTV电视剧
   BesTV看天下
   BesTV谍战剧场
-  CETV1
   上海乐游频道
   上海动漫秀场
   上海哈哈炫动
@@ -1637,10 +1545,6 @@ IPTV频道
   陇尚生活
 
 新疆频道
-  CETV1
-  CETV4
-  CGTN纪录
-  CGTN英语
   SSTV2
   上海东方财经
   上海动漫秀场
@@ -1699,15 +1603,6 @@ IPTV频道
   霍城1
 
 江西频道
-  CETV1
-  CETV2
-  CETV4
-  CGTN俄语
-  CGTN法语
-  CGTN纪录
-  CGTN英语
-  CGTN西班牙语
-  CGTN阿拉伯语
   CHC动作电影
   CHC家庭影院
   CHC影迷电影
@@ -1751,7 +1646,6 @@ IPTV频道
 吉林频道
   BesTV游戏
   CCTV卫生健康
-  CETV1
   CHC动作电影
   CHC家庭影院
   CHC影迷电影
@@ -1808,13 +1702,6 @@ IPTV频道
   长影频道
 
 四川频道
-  CETV-1
-  CETV1
-  CETV2
-  CETV4
-  CGTN法语
-  CGTN英语
-  CGTN西班牙语
   CHANNEL-V
   CHC动作电影
   CHC家庭影院
@@ -1904,16 +1791,7 @@ IPTV频道
   麻辣体育
 
 广东频道
-  CETV1
-  CETV2
-  CETV4
   CETV早期教育
-  CGTN俄语
-  CGTN法语
-  CGTN纪录
-  CGTN英语
-  CGTN西班牙语
-  CGTN阿拉伯语
   GCTN英语
   HZTV-1
   HZTV-2
@@ -1981,14 +1859,6 @@ IPTV频道
   香山文化频道
 
 宁夏频道
-  CETV1
-  CETV4
-  CGTN俄语
-  CGTN法语
-  CGTN纪录
-  CGTN英语
-  CGTN西班牙语
-  CGTN阿拉伯语
   上海东方财经
   上海动漫秀场
   上海欢笑剧场
@@ -2007,8 +1877,6 @@ IPTV频道
 天津频道
   CCTV卫生健康
   CETV早期教育
-  CGTN纪录
-  CGTN英语
   CHC动作电影
   CHC家庭影院
   CHC影迷电影
@@ -2080,9 +1948,6 @@ IPTV频道
   魅力足球
 
 黑龙江频道
-  CETV1
-  CETV2
-  CETV4
   上海东方财经
   上海乐游
   上海动漫秀场
@@ -2119,9 +1984,6 @@ IPTV频道
 
 辽宁频道
   CCTV5+体育赛事
-  CETV1
-  CETV2
-  CETV4
   CGTN-俄语
   CGTN-法语
   CGTN-纪录
