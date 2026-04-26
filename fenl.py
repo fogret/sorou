@@ -73,7 +73,8 @@ def classify_channel(name):
         if prov in name:
             return f"地方频道_{prov}"
 
-    return "其它频道"
+    # ⭐ 无法分类 → 未知频道
+    return "未知频道"
 
 def format_horizontal(name, items):
     lines = []
@@ -119,6 +120,7 @@ def main():
         "电影频道": [],
         "数字频道": [],
         "地方频道_贵州": [],  # 贵州优先
+        "未知频道": [],         # ⭐ 新增
     }
 
     # 其它省份地方频道
@@ -127,6 +129,10 @@ def main():
     # 分类
     for ch in all_channels:
         c = classify_channel(ch)
+
+        if c == "未知频道":
+            groups["未知频道"].append(ch)
+            continue
 
         if c.startswith("地方频道_"):
             prov = c.split("_")[1]
@@ -145,6 +151,7 @@ def main():
     groups["卫视频道"].sort()
     groups["数字频道"].sort()
     groups["地方频道_贵州"].sort()
+    groups["未知频道"].sort()
 
     # 其它省份按拼音排序
     sorted_provinces = sorted(other_province_groups.keys())
@@ -160,7 +167,8 @@ def main():
         "电影频道_CHC",
         "电影频道",
         "数字频道",
-        "地方频道_贵州"
+        "地方频道_贵州",
+        "未知频道"   # ⭐ 新增
     ]
 
     for key in order:
