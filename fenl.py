@@ -50,16 +50,12 @@ def main():
                 if chn_name.startswith("http"):
                     continue
 
-                # 优先级归类
+                # 优先级从上到下
                 if "卫视" in chn_name:
                     result["卫视频道"].add(chn_name)
                 elif chn_name.startswith("CCTV"):
                     result["央视频道"].add(chn_name)
-                # 数字频道：CETV / CGTN / 卡酷 / 嘉佳 / 卡通 / 炫动 / 电视
-                elif (
-                    chn_name.startswith(("CETV", "CGTN"))
-                    or any(k in chn_name for k in ["卡酷", "嘉佳", "卡通", "炫动", "电视"])
-                ):
+                elif chn_name.startswith(("CETV", "CGTN")):
                     result["数字频道"].add(chn_name)
                 elif "CHC" in chn_name or "电影" in chn_name:
                     result["电影频道"].add(chn_name)
