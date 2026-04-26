@@ -1,4 +1,4 @@
-name: Run fenl and commit
+name: Debug Run fenl and commit
 
 on:
   workflow_dispatch:   # 仅手动运行
@@ -6,12 +6,14 @@ on:
 jobs:
   run-fenl:
     runs-on: ubuntu-latest
+    # 保留运行日志，方便下载查看
+    if: always()
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          persist-credentials: true   # 必须开启，否则无法 push
+          persist-credentials: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -22,14 +24,28 @@ jobs:
         run: |
           pip install requests aiohttp
 
-      - name: Run fenl.py
+      - name: Run fenl.py (Debug Mode)
+        # 关键：运行脚本时添加 DEBUG 环境变量
+        env:
+          DEBUG: "true"
         run: |
           python fenl.py
+
+      - name: Debug - List workspace files
+        # 关键：列出当前目录所有文件，确认 data.txt 和 fenl_output.txt 是否存在
+        run: |
+          echo "=== 当前工作目录内容 ==="
+          pwd
+          ls -la
+          echo "=== data.txt 内容 ==="
+          cat data.txt || echo "data.txt 不存在"
+          echo "=== 检查 fenl_output.txt 大小 ==="
+          du -h fenl_output.txt || echo "fenl_output.txt 不存在"
 
       - name: Commit and push changes
         run: |
           git config --local user.name "github-actions"
           git config --local user.email "github-actions@github.com"
           git add fenl_output.txt
-          git commit -m "Update fenl_output.txt" || echo "No changes to commit"
+          git commit -m "Update fenl_output.txt [debug]" || echo "No changes to commit"
           git push
