@@ -4,82 +4,63 @@ import time
 import requests
 from collections import OrderedDict
 
-# ===================== 配置 =====================
+# 配置
 INPUT_FILE = "data.txt"
 OUTPUT_FILE = "fenl_output.txt"
-TIMEOUT = 20
 
-categories = OrderedDict()
-total_channels = 0
+# 存储分类与频道名
+groups = OrderedDict()
 
-# 精准匹配你这种格式
-pattern = re.compile(
-    r'#EXTINF:-1\s+group-title="([^"]+)",([^ ]+)\s+(https?://\S+)',
-    re.IGNORECASE
-)
+# 精准匹配 group-title 和频道名
+pattern = re.compile(r'#EXTINF:-1\s+group-title="([^"]+)",([^ ]+)', re.IGNORECASE)
 
 def log(msg):
-    now = time.strftime("%Y-%m-%d %H:%M:%S")
-    print(f"[{now}] {msg}")
-
-def parse_content(text):
-    global total_channels
-    count = 0
-    matches = pattern.findall(text)
-
-    for group, name, url in matches:
-        group = group.strip()
-        name = name.strip()
-        url = url.strip()
-
-        if group not in categories:
-            categories[group] = OrderedDict()
-        if url not in categories[group]:
-            categories[group][url] = (name, url)
-            total_channels += 1
-            count += 1
-    return count
+    print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}")
 
 def main():
-    log("=" * 60)
-    log("开始解析数据源：data.txt")
-    log("=" * 60)
-
     if not os.path.exists(INPUT_FILE):
-        log(f"❌ 未找到 {INPUT_FILE}")
+        log(f"错误：未找到 {INPUT_FILE}")
         return
 
-    with open(INPUT_FILE, "r", encoding="utf-8", errors="ignore") as f:
-        urls = [l.strip() for l in f if l.strip()]
+    # 读取数据源地址
+    with open(INPUT_FILE, 'r', encoding='utf-8') as f:
+        urls = [line.strip() for line in f if line.strip().startswith('http')]
 
-    log(f"✅ 读取到 {len(urls)} 个数据源")
+    log(f"读取到 {len(urls)} 个数据源")
 
+    # 逐个解析
+    total_count = 0
     for idx, url in enumerate(urls, 1):
-        log(f"[{idx}/{len(urls)}] 解析：{url}")
+        log(f"[{idx}/{len(urls)}] 正在解析：{url}")
         try:
-            resp = requests.get(
-                url,
-                timeout=TIMEOUT,
-                headers={"User-Agent": "Mozilla/5.0"}
-            )
+            resp = requests.get(url, timeout=20, headers={"User-Agent": "Mozilla/5.0"})
             resp.raise_for_status()
-            cnt = parse_content(resp.text)
-            log(f"   └─ 成功解析频道：{cnt} 个")
+            matches = pattern.findall(resp.text)
+
+            for group_title, channel_name in matches:
+                group = group_title.strip()
+                name = channel_name.strip()
+                if group not in groups:
+                    groups[group] = set()
+                groups[group].add(name)
+
+            count = len(matches)
+            total_count += count
+            log(f"   └─ 解析到 {count} 个频道")
         except Exception as e:
-            log(f"   └─ 失败：{str(e)}")
+            log(f"   └─ 解析失败：{str(e)}")
 
-    log("=" * 60)
-    log(f"📊 去重后总频道：{total_channels} 个")
-    log(f"📄 写入文件：{OUTPUT_FILE}")
-
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        for genre, items in categories.items():
-            f.write(f"{genre},#genre#\n")
-            for name, url in items.values():
-                f.write(f"{name},{url}\n")
+    # 写入文件
+    with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
+        for group_name, channel_set in groups.items():
+            f.write(f"{group_name}\n")
+            for chn in sorted(channel_set):
+                f.write(f"  {chn}\n")
             f.write("\n")
 
-    log("✅ 解析完成！")
+    log("=" * 60)
+    log(f"✅ 解析完成，总计去重频道：{total_count} 个")
+    log(f"✅ 结果已保存至：{OUTPUT_FILE}")
     log("=" * 60)
 
 if __name__ == "__main__":
