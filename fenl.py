@@ -7,10 +7,11 @@ from collections import defaultdict
 INPUT_FILE = "data.txt"
 OUTPUT_FILE = "fenl_output.txt"
 
+# 日志
 def log(msg):
-    """只保留必要运行日志，干净不干扰输出"""
     print(f"[INFO] {msg}")
 
+# 下载远程 M3U
 def download_m3u(url):
     try:
         resp = requests.get(url, timeout=15)
@@ -20,33 +21,46 @@ def download_m3u(url):
         log(f"下载失败：{url} → {str(e)}")
         return ""
 
-def parse_m3u_raw(content):
+# 解析真实 M3U → 分类 → 频道名
+def parse_m3u(content):
     lines = [l.strip() for l in content.splitlines() if l.strip()]
-    categories = defaultdict(set)
-    current_cat = None
+
+    cats = defaultdict(set)
     current_name = None
 
     for line in lines:
-        if line.startswith("#EXTM3U"):
-            continue
-        elif line.startswith("#EXTINF"):
+        if line.startswith("#EXTINF"):
             m = re.search(r',(.+)', line)
             if m:
                 current_name = m.group(1).strip()
             continue
-        elif line.startswith(("http://", "https://", "rtmp://", "udp://", "rtp://")):
-            if current_name and current_cat:
-                categories[current_cat].add(current_name)
-                current_name = None
-            continue
-        elif line.startswith("#"):
-            cat = line.replace("#", "").strip()
-            if cat:
-                current_cat = cat
-            continue
 
-    return categories
+        if current_name and line.startswith(("http://", "https://", "rtmp://", "udp://", "rtp://")):
+            # 自动推断分类
+            cat = auto_classify(current_name)
+            cats[cat].add(current_name)
+            current_name = None
 
+    return cats
+
+# 自动分类规则：根据频道名判断
+def auto_classify(name):
+    name = name.lower()
+
+    if re.search(r"央视|cctv", name):
+        return "央视频道"
+    elif "卫视" in name:
+        return "卫视频道"
+    elif "电影" in name:
+        return "电影频道"
+    elif re.search(r"付费|hd|高清", name):
+        return "付费频道"
+    elif re.search(r"数字|tv|频道", name):
+        return "数字频道"
+    else:
+        return "地方频道"
+
+# 横向写入
 def write_horizontal(categories, f):
     for cat in sorted(categories.keys()):
         chans = sorted(categories[cat])
@@ -63,11 +77,10 @@ if __name__ == "__main__":
         urls = [l.strip() for l in f if l.strip().startswith("http")]
 
     if not urls:
-        log("错误：data.txt 中无有效链接")
+        log("错误：data.txt 无有效链接")
         exit(1)
 
     all_cats = defaultdict(set)
-    total_channels = 0
 
     for url in urls:
         log(f"正在下载: {url}")
@@ -75,19 +88,19 @@ if __name__ == "__main__":
         if not content:
             continue
 
-        raw_cats = parse_m3u_raw(content)
-        chan_count = 0
+        cats = parse_m3u(content)
+        total = 0
 
-        for cat, chans in raw_cats.items():
-            all_cats[cat].update(chans)
-            chan_count += len(chans)
+        for c, chans in cats.items():
+            all_cats[c].update(chans)
+            total += len(chans)
 
-        total_channels += chan_count
-        log(f"解析到 {chan_count} 个频道")
+        log(f"解析到 {total} 个频道")
 
-    log(f"总计去重后：{len([ch for chans in all_cats.values() for ch in chans])} 个频道")
+    total_final = len([ch for chans in all_cats.values() for ch in chans])
+    log(f"总计去重后：{total_final} 个频道")
 
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         write_horizontal(all_cats, f)
 
-    log(f"完成！结果写入: {OUTPUT_FILE}")
+    log(f"完成！写入: {OUTPUT_FILE}")
