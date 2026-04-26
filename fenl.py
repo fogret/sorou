@@ -1,113 +1,84 @@
 # -*- coding: utf-8 -*-
-# 不跳、不绕、不改动任何东西
-# 完全保持原始分组、原始顺序、不去改名字
+"""
+完全保持你原始 M3U 的分组标题
+直接读取 → 原样提取 → 去重 → 输出
+不改名、不推断、不换顺序
+"""
 
 import os
 import re
-import requests
-from collections import OrderedDict
 
-INPUT_FILE = "data.txt"
-OUTPUT_FILE = "fenl_output.txt"
+def main():
+    # 你指定的输入文件
+    input_file = "data.txt"
+    output_file = "fenl_output.txt"
 
-def log(msg):
-    print(f"[INFO] {msg}")
-
-def download(url):
-    try:
-        resp = requests.get(url, timeout=15)
-        resp.raise_for_status()
-        return resp.text
-    except:
-        log(f"下载失败：{url}")
-        return ""
-
-def parse_original_groups(content):
-    """
-    纯提取原始分组，完全不改分组名、不改顺序
-    只抓 #EXTGRP 与 #EXTINF → 频道名
-    """
-    groups = OrderedDict()
-    current_group = None
-    name = None
-
-    lines = [l.strip() for l in content.splitlines() if l.strip()]
-
-    for line in lines:
-        if line.startswith("#EXTGRP:"):
-            current_group = line[8:].strip()
-            if current_group not in groups:
-                groups[current_group] = []
-            continue
-
-        if line.startswith("#EXTINF:"):
-            m = re.search(r',(.+)', line)
-            if m:
-                name = m.group(1).strip()
-            continue
-
-        if current_group and name and line.startswith(("http://", "https://", "rtmp://", "udp://", "rtp://")):
-            # 只保存频道名，不保存地址
-            groups[current_group].append(name)
-            name = None
-
-    return groups
-
-def dedup_list(lst):
-    seen = set()
-    result = []
-    for x in lst:
-        if x not in seen:
-            seen.add(x)
-            result.append(x)
-    return result
-
-def write_original_format(groups, out_path):
-    """
-    完全按原始分组格式写入
-    分组名
-    频道名1 | 频道名2 | ...
-    保持原始顺序
-    """
-    with open(out_path, "w", encoding="utf-8") as f:
-        for group, chans in groups.items():
-            chans = dedup_list(chans)
-            if chans:
-                f.write(f"{group}\n")
-                f.write(" | ".join(chans) + "\n\n")
-
-if __name__ == "__main__":
-    if not os.path.exists(INPUT_FILE):
-        log("错误：未找到 data.txt")
+    if not os.path.exists(input_file):
+        print("[错误] 未找到 data.txt")
         exit(1)
 
-    with open(INPUT_FILE, "r", encoding="utf-8") as f:
-        urls = [l.strip() for l in f if l.strip().startswith("http")]
+    # 读取所有 URL
+    with open(input_file, "r", encoding="utf-8") as f:
+        urls = [line.strip() for line in f if line.strip().startswith("http")]
 
     if not urls:
-        log("错误：data.txt 中无有效链接")
+        print("[错误] data.txt 中无有效链接")
         exit(1)
 
-    all_groups = OrderedDict()
+    result = []
+    group_title = None
+    title = None
 
     for url in urls:
-        log(f"正在处理：{url}")
-        content = download(url)
+        print(f"[正在处理] {url}")
+        content = download_m3u(url)
         if not content:
             continue
 
-        raw = parse_original_groups(content)
+        lines = content.splitlines()
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
 
-        for g, chans in raw.items():
-            if g not in all_groups:
-                all_groups[g] = []
-            all_groups[g].extend(chans)
+            # 识别分组
+            if line.startswith("#EXTINF:"):
+                m = re.search(r'group-title="([^"]+)"', line)
+                if m:
+                    group_title = m.group(1)
+                continue
 
-    total = 0
-    for g in all_groups:
-        all_groups[g] = dedup_list(all_groups[g])
-        total += len(all_groups[g])
+            # 识别频道名
+            if line.startswith(("http://", "https://", "rtp://", "rtmp://")):
+                if group_title:
+                    result.append(f"{group_title}")
+                group_title = None
+                continue
 
-    log(f"总计去重后：{total} 个频道")
-    write_original_format(all_groups, OUTPUT_FILE)
-    log(f"完成！结果写入：{OUTPUT_FILE}")
+    # 去重并保持顺序
+    final = []
+    seen = set()
+    for x in result:
+        if x not in seen:
+            seen.add(x)
+            final.append(x)
+
+    # 写入
+    with open(output_file, "w", encoding="utf-8") as f:
+        for line in final:
+            f.write(line + "\n")
+
+    print(f"\n完成！已写入 {output_file}")
+
+def download_m3u(url):
+    try:
+        import requests
+        resp = requests.get(url, timeout=15)
+        resp.raise_for_status()
+        return resp.text
+    except Exception as e:
+        print(f"[下载失败] {url} → {str(e)}")
+        return ""
+
+if __name__ == "__main__":
+    main()
