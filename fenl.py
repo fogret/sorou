@@ -11,6 +11,7 @@ OUTPUT_FILE = "fenl_output.txt"
 result = OrderedDict()
 result["央视频道"] = set()
 result["卫视频道"] = set()
+result["付费频道"] = set()
 
 # 匹配正则
 pattern = re.compile(r'group-title="([^"]+)",([^ \n\r]+)', re.I)
@@ -31,6 +32,10 @@ def is_cctv(name):
 
 def is_weishi(name):
     return "卫视" in name
+
+def is_pay(name):
+    pay_keys = ["付费", "精品", "高清", "4K", "购物", "测试", "导视", "VIP", "尊享", "数字"]
+    return any(k in name for k in pay_keys)
 
 def main():
     if not os.path.exists(INPUT_FILE):
@@ -58,6 +63,8 @@ def main():
                     result["央视频道"].add(chn_name)
                 elif is_weishi(chn_name):
                     result["卫视频道"].add(chn_name)
+                elif is_pay(chn_name):
+                    result["付费频道"].add(chn_name)
                 else:
                     prov = clean_province(group_name)
                     if prov not in result:
@@ -77,7 +84,7 @@ def main():
                 f.write(f"  {name}\n")
             f.write("\n")
 
-    log("✅ 完成：央视+卫视独立分类 + 省份频道 + 全部去重")
+    log("✅ 完成：央视+卫视+付费独立分类 + 省份频道 + 全部去重")
 
 if __name__ == "__main__":
     main()
