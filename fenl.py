@@ -14,6 +14,8 @@ result["卫视频道"] = set()
 result["付费频道"] = set()
 result["IPTV频道"] = set()
 result["数字频道"] = set()
+result["电影频道"] = set()
+result["华数频道"] = set()
 
 # 匹配正则
 pattern = re.compile(r'group-title="([^"]+)",([^ \n\r]+)', re.I)
@@ -62,6 +64,12 @@ def is_iptv(name):
 def is_digital(name):
     return name in digital_channels
 
+def is_movie(name):
+    return "CHC" in name or "电影" in name
+
+def is_huashu(name):
+    return "华数" in name
+
 def main():
     if not os.path.exists(INPUT_FILE):
         log(f"未找到 {INPUT_FILE}")
@@ -90,6 +98,10 @@ def main():
                     result["卫视频道"].add(chn_name)
                 elif is_digital(chn_name):
                     result["数字频道"].add(chn_name)
+                elif is_movie(chn_name):
+                    result["电影频道"].add(chn_name)
+                elif is_huashu(chn_name):
+                    result["华数频道"].add(chn_name)
                 elif is_pay(chn_name):
                     result["付费频道"].add(chn_name)
                 elif is_iptv(chn_name):
@@ -113,7 +125,7 @@ def main():
                 f.write(f"  {name}\n")
             f.write("\n")
 
-    log("✅ 完成：央视+卫视+付费+IPTV+数字频道 + 省份频道，全部去重")
+    log("✅ 完成：央视+卫视+付费+IPTV+数字+电影+华数+省份频道，全部去重")
 
 if __name__ == "__main__":
     main()
