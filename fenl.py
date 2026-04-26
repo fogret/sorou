@@ -7,11 +7,12 @@ from collections import defaultdict
 INPUT_FILE = "data.txt"
 OUTPUT_FILE = "fenl_output.txt"
 
-# 日志
+# 每行最多显示多少个频道（自动换行规则）
+MAX_CHANNELS_PER_LINE = 10
+
 def log(msg):
     print(f"[INFO] {msg}")
 
-# 下载远程 M3U
 def download_m3u(url):
     try:
         resp = requests.get(url, timeout=15)
@@ -21,10 +22,8 @@ def download_m3u(url):
         log(f"下载失败：{url} → {str(e)}")
         return ""
 
-# 解析真实 M3U → 分类 → 频道名
 def parse_m3u(content):
     lines = [l.strip() for l in content.splitlines() if l.strip()]
-
     cats = defaultdict(set)
     current_name = None
 
@@ -36,17 +35,14 @@ def parse_m3u(content):
             continue
 
         if current_name and line.startswith(("http://", "https://", "rtmp://", "udp://", "rtp://")):
-            # 自动推断分类
             cat = auto_classify(current_name)
             cats[cat].add(current_name)
             current_name = None
 
     return cats
 
-# 自动分类规则：根据频道名判断
 def auto_classify(name):
     name = name.lower()
-
     if re.search(r"央视|cctv", name):
         return "央视频道"
     elif "卫视" in name:
@@ -60,13 +56,22 @@ def auto_classify(name):
     else:
         return "地方频道"
 
-# 横向写入
-def write_horizontal(categories, f):
+def write_horizontal_auto_wrap(categories, f):
+    """横向排列 + 真正自动换行（每 MAX_CHANNELS_PER_LINE 换一行）"""
     for cat in sorted(categories.keys()):
         chans = sorted(categories[cat])
-        if chans:
-            line = f"{cat} → " + " | ".join(chans)
-            f.write(line + "\n\n")
+        if not chans:
+            continue
+
+        f.write(f"{cat} →\n")
+
+        # 自动换行逻辑
+        for i in range(0, len(chans), MAX_CHANNELS_PER_LINE):
+            chunk = chans[i:i+MAX_CHANNELS_PER_LINE]
+            line = " | ".join(chunk)
+            f.write("  " + line + "\n")
+
+        f.write("\n")
 
 if __name__ == "__main__":
     if not os.path.exists(INPUT_FILE):
@@ -101,6 +106,6 @@ if __name__ == "__main__":
     log(f"总计去重后：{total_final} 个频道")
 
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        write_horizontal(all_cats, f)
+        write_horizontal_auto_wrap(all_cats, f)
 
     log(f"完成！写入: {OUTPUT_FILE}")
