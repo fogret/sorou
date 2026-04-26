@@ -55,7 +55,9 @@ def main():
                     result["卫视频道"].add(chn_name)
                 elif chn_name.startswith("CCTV"):
                     result["央视频道"].add(chn_name)
-                elif chn_name.startswith(("CETV", "CGTN")):
+                elif chn_name.startswith(("CETV", "CGTN")) or \
+                     "卡酷" in chn_name or "嘉佳" in chn_name or \
+                     "卡通" in chn_name or "炫动" in chn_name:
                     result["数字频道"].add(chn_name)
                 elif "CHC" in chn_name or "电影" in chn_name:
                     result["电影频道"].add(chn_name)
