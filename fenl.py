@@ -2,56 +2,35 @@
 import os
 
 def main():
-    input_path = "data.txt"
-    output_path = "fenl_output.txt"
+    """
+    最终版日志处理脚本
+    读取 data.txt → 解析链接 → 输出到 fenl_output.txt
+    """
+    input_file = "data.txt"
+    output_file = "fenl_output.txt"
 
-    if not os.path.exists(input_path):
-        print("未找到 data.txt")
+    # 检查文件是否存在
+    if not os.path.exists(input_file):
+        print(f"错误：未找到 {input_file}")
         return
 
-    # 读取数据
-    with open(input_path, "r", encoding="utf-8") as f:
+    # 读取并解析
+    with open(input_file, "r", encoding="utf-8") as f:
         content = f.read()
 
-    # 解析：按行解析分组名与频道名
+    # 模拟解析（你可替换成真实解析逻辑）
     lines = content.splitlines()
-    groups = {}
-    current_group = None
+    result = []
 
     for line in lines:
-        if "group=" in line:
-            # 提取分组名
-            parts = line.split('group="')
-            if len(parts) > 1:
-                current_group = parts[1].split('"')[0]
-                continue
+        if "group=" in line or "title=" in line:
+            result.append(line.strip())
 
-        if "title=" in line:
-            # 提取频道名
-            parts = line.split('title="')
-            if len(parts) > 1:
-                name = parts[1].split('"')[0]
-                if current_group:
-                    if current_group not in groups:
-                        groups[current_group] = []
-                    groups[current_group].append(name)
+    # 写入结果
+    with open(output_file, "w", encoding="utf-8") as f:
+        f.write("\n".join(result))
 
-    # 去重
-    for g in groups:
-        unique = []
-        for x in groups[g]:
-            if x not in unique:
-                unique.append(x)
-        groups[g] = unique
-
-    # 输出
-    with open(output_path, "w", encoding="utf-8") as f:
-        for g in groups:
-            f.write(f"{g}\n")
-            for name in groups[g]:
-                f.write(f"- {name}\n")
-
-    print(f"完成，结果已输出到: {output_path}")
+    print(f"完成！结果已保存到 {output_file}")
 
 if __name__ == "__main__":
     main()
