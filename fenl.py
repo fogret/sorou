@@ -7,84 +7,87 @@ from collections import defaultdict
 INPUT_FILE = "data.txt"
 OUTPUT_FILE = "fenl_output.txt"
 
+def log(msg):
+    """只保留必要运行日志，干净不干扰输出"""
+    print(f"[INFO] {msg}")
+
 def download_m3u(url):
     try:
         resp = requests.get(url, timeout=15)
         resp.raise_for_status()
         return resp.text
-    except:
+    except Exception as e:
+        log(f"下载失败：{url} → {str(e)}")
         return ""
 
 def parse_m3u_raw(content):
-    """
-    严格按 M3U 原始结构解析：
-    得到原始分类 → 频道名 的结构
-    完全不改动原始分类名
-    """
     lines = [l.strip() for l in content.splitlines() if l.strip()]
-
     categories = defaultdict(set)
-    current_category = None
+    current_cat = None
     current_name = None
 
     for line in lines:
         if line.startswith("#EXTM3U"):
             continue
         elif line.startswith("#EXTINF"):
-            # 尝试从 EXTINF 提取频道名
             m = re.search(r',(.+)', line)
             if m:
                 current_name = m.group(1).strip()
             continue
         elif line.startswith(("http://", "https://", "rtmp://", "udp://", "rtp://")):
-            if current_name:
-                # 遇到链接 → 说明一个频道结束
-                if current_category:
-                    categories[current_category].add(current_name)
+            if current_name and current_cat:
+                categories[current_cat].add(current_name)
                 current_name = None
-                continue
+            continue
         elif line.startswith("#"):
-            # 原始 M3U 中 # 开头的可能是分组名
             cat = line.replace("#", "").strip()
             if cat:
-                current_category = cat
+                current_cat = cat
             continue
 
     return categories
 
 def write_horizontal(categories, f):
-    """
-    横向排列：
-    分类名 → 频道名1 | 频道名2 | 频道名3 | ...
-    自动换行
-    自动去重
-    无链接
-    """
     for cat in sorted(categories.keys()):
-        channels = sorted(categories[cat])
-        if channels:
-            line = f"{cat} → " + " | ".join(channels)
+        chans = sorted(categories[cat])
+        if chans:
+            line = f"{cat} → " + " | ".join(chans)
             f.write(line + "\n\n")
 
 if __name__ == "__main__":
     if not os.path.exists(INPUT_FILE):
+        log("错误：未找到 data.txt")
         exit(1)
 
     with open(INPUT_FILE, "r", encoding="utf-8") as f:
         urls = [l.strip() for l in f if l.strip().startswith("http")]
 
+    if not urls:
+        log("错误：data.txt 中无有效链接")
+        exit(1)
+
     all_cats = defaultdict(set)
+    total_channels = 0
 
     for url in urls:
+        log(f"正在下载: {url}")
         content = download_m3u(url)
         if not content:
             continue
 
         raw_cats = parse_m3u_raw(content)
+        chan_count = 0
+
         for cat, chans in raw_cats.items():
             all_cats[cat].update(chans)
+            chan_count += len(chans)
+
+        total_channels += chan_count
+        log(f"解析到 {chan_count} 个频道")
+
+    log(f"总计去重后：{len([ch for chans in all_cats.values() for ch in chans])} 个频道")
 
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         write_horizontal(all_cats, f)
 
-    print(f"✅ 完成！结果写入: {OUTPUT_FILE}")
+    log(f"完成！结果写入: {OUTPUT_FILE}")
